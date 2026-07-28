@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { MenuIcon, LogoIcon, PlayIcon, SpinnerIcon, WifiOffIcon, BookmarkIcon } from './icons';
+import { MenuIcon, LogoIcon, PlayIcon, SpinnerIcon, BookmarkIcon } from './icons';
 import { QURAN_INDEX } from '../quranIndex';
 import { formatSurahNameForDisplay } from '../utils/text';
 import SearchForm from './SearchForm';
@@ -220,7 +220,7 @@ const Header: React.FC<HeaderProps> = ({
             <div className="w-full max-w-7xl mx-auto px-4">
                 {/* Row 1: Brand, Title, and Actions */}
                 <div className="flex items-center justify-between h-14 gap-2">
-                    {/* Right Group: Menu, Theme, Offline Indicator */}
+                    {/* Right Group: Menu and Theme */}
                     <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                         <button
                             onClick={() => setIsSidePanelOpen(true)}
@@ -230,11 +230,6 @@ const Header: React.FC<HeaderProps> = ({
                             <MenuIcon className="w-6 h-6" />
                         </button>
                         <ThemeToggleButton />
-                        {!isOnline && (
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex-shrink-0" title="أنت غير متصل بالإنترنت (وضع الأوفلاين).">
-                                <WifiOffIcon className="w-4 h-4 text-amber-500" />
-                            </div>
-                        )}
                     </div>
 
                     {/* Center Group: Dynamic Page Title & Desktop Search */}
