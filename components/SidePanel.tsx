@@ -108,7 +108,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
                                 <UserCircleIcon className="w-5 h-5" />
                             </a>
                             <span className="text-[10px] font-mono text-text-subtle select-none">
-                                V22.0.0
+                                v1.0.9
                             </span>
                         </div>
                     </div>
