@@ -89,29 +89,71 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
         if (isPlaying) setControlsVisible(prev => !prev);
     };
 
+    const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
+
     const toggleFullscreen = () => {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().then(() => {
+        const docEl = document.documentElement as any;
+        const doc = document as any;
+        const isCurrentlyNativeFS = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
+
+        if (!isCurrentlyNativeFS && !isPseudoFullscreen) {
+            const reqFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+            if (reqFS) {
+                try {
+                    const promise = reqFS.call(docEl);
+                    if (promise && promise.then) {
+                        promise.then(() => {
+                            setIsFullscreen(true);
+                        }).catch(() => {
+                            // Fallback to pseudo-fullscreen on rejection
+                            setIsPseudoFullscreen(true);
+                            setIsFullscreen(true);
+                        });
+                    } else {
+                        setIsFullscreen(true);
+                    }
+                } catch (e) {
+                    setIsPseudoFullscreen(true);
+                    setIsFullscreen(true);
+                }
+            } else {
+                // Native fullscreen unsupported (e.g. mobile Safari / WebView)
+                setIsPseudoFullscreen(true);
                 setIsFullscreen(true);
-            }).catch(err => {
-                console.error(`Error attempting to enable fullscreen: ${err.message}`);
-            });
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen().then(() => {
-                    setIsFullscreen(false);
-                });
             }
+        } else {
+            const exitFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+            if (exitFS && isCurrentlyNativeFS) {
+                try { doc.exitFullscreen(); } catch (e) {}
+            }
+            setIsPseudoFullscreen(false);
+            setIsFullscreen(false);
         }
     };
 
     useEffect(() => {
         const handleFullscreenChange = () => {
-            setIsFullscreen(!!document.fullscreenElement);
+            const doc = document as any;
+            const isNativeFS = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
+            if (isNativeFS) {
+                setIsFullscreen(true);
+            } else if (!isPseudoFullscreen) {
+                setIsFullscreen(false);
+            }
         };
+
         document.addEventListener('fullscreenchange', handleFullscreenChange);
-        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    }, []);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+        };
+    }, [isPseudoFullscreen]);
 
     useEffect(() => {
         if (!isPlaying) setControlsVisible(true);
@@ -211,6 +253,18 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
         return 'ختمة كاملة';
     };
 
+    const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        e.stopPropagation();
+        if (!audioRef.current || !audioDuration) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const width = rect.width;
+        if (width <= 0) return;
+        const percentage = Math.max(0, Math.min(1, clickX / width));
+        const newTime = percentage * audioDuration;
+        audioRef.current.currentTime = newTime;
+    };
+
     if (!currentAyah) {
         return <div className="flex flex-col gap-4 justify-center items-center h-screen bg-gray-900 text-white"><SpinnerIcon className="w-10 h-10"/> <p>جاري تحميل بيانات الختمة...</p></div>;
     }
@@ -296,42 +350,88 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                 </div>
             </main>
 
-            <footer className={`flex-shrink-0 p-4 bg-surface/80 backdrop-blur-md shadow-[0_-4px_30px_rgba(0,0,0,0.1)] z-10 transition-all duration-300 ${controlsVisible ? 'opacity-100' : 'opacity-0 translate-y-full'}`}>
-                <div className="w-full h-1.5 bg-surface-subtle rounded-full mb-4"><div className="h-1.5 bg-primary rounded-full transition-all" style={{ width: audioDuration > 0 ? `${(audioProgress / audioDuration) * 100}%` : '0%'}}></div></div>
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0 flex flex-col gap-1 items-start">
-                        <AudioEditionSelector audioEditions={allAudioEditions} selectedAudioEdition={selectedAudioEdition} onSelect={onAudioEditionChange} size="sm" />
-                        <span className="text-xs font-semibold text-text-muted px-2">{getPlaybackScopeDescription()}</span>
-                    </div>
+            <footer className={`flex-shrink-0 p-3 sm:p-4 bg-surface/90 backdrop-blur-md shadow-[0_-4px_30px_rgba(0,0,0,0.15)] z-20 transition-all duration-300 ${controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'}`}>
+                {/* Progress Bar */}
+                <div className="w-full h-2 bg-surface-subtle rounded-full mb-3 sm:mb-4 overflow-hidden cursor-pointer flex items-center" onClick={handleProgressClick} title="الانتقال إلى زمن معين في الآية">
+                    <div className="h-full bg-primary rounded-full transition-all duration-150" style={{ width: audioDuration > 0 ? `${(audioProgress / audioDuration) * 100}%` : '0%'}}></div>
+                </div>
+
+                {/* Controls Container */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
                     
-                    {/* Controls Center */}
-                    <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-                        <button onClick={handlePrevAyah} className="p-2 text-text-secondary hover:text-text-primary transition-colors"><BackwardIcon className="w-7 h-7" /></button>
-                        <button onClick={handlePlayPause} className="p-4 bg-primary text-white rounded-full shadow-lg hover:bg-primary-hover transition-transform hover:scale-105">
-                             {isBuffering ? <SpinnerIcon className="w-8 h-8"/> : (isPlaying ? <PauseIcon className="w-8 h-8" /> : <PlayIcon className="w-8 h-8" />)}
+                    {/* Reciter & Playback Scope Info */}
+                    <div className="w-full sm:w-1/3 flex items-center justify-between sm:justify-start gap-2 min-w-0">
+                        <div className="flex-1 sm:flex-none min-w-0">
+                            <AudioEditionSelector audioEditions={allAudioEditions} selectedAudioEdition={selectedAudioEdition} onSelect={onAudioEditionChange} size="sm" />
+                        </div>
+                        <span className="text-[11px] sm:text-xs font-semibold text-text-muted truncate max-w-[150px] sm:max-w-xs bg-surface-subtle/80 px-2.5 py-1 rounded-md border border-border-default/40">
+                            {getPlaybackScopeDescription()}
+                        </span>
+                    </div>
+
+                    {/* Core Audio Navigation Controls (Center) */}
+                    <div className="flex items-center justify-center gap-4 sm:gap-6 w-full sm:w-1/3 my-0.5 sm:my-0 dir-ltr" dir="ltr">
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); handlePrevAyah(); }} 
+                            title="الآية السابقة" 
+                            aria-label="الآية السابقة"
+                            className="p-2.5 sm:p-2 text-text-secondary hover:text-primary hover:bg-surface-hover rounded-full transition-colors active:scale-95 flex items-center justify-center"
+                        >
+                            <BackwardIcon className="w-7 h-7 sm:w-8 sm:h-8" />
                         </button>
-                        <button onClick={handleNextAyah} className="p-2 text-text-secondary hover:text-text-primary transition-colors"><ForwardIcon className="w-7 h-7" /></button>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); handlePlayPause(); }} 
+                            title={isPlaying ? "إيقاف مؤقت" : "تشغيل"}
+                            aria-label={isPlaying ? "إيقاف مؤقت" : "تشغيل"}
+                            className="p-3.5 sm:p-4 bg-primary text-white rounded-full shadow-lg hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
+                        >
+                             {isBuffering ? <SpinnerIcon className="w-7 h-7 sm:w-8 sm:h-8"/> : (isPlaying ? <PauseIcon className="w-7 h-7 sm:w-8 sm:h-8" /> : <PlayIcon className="w-7 h-7 sm:w-8 sm:h-8" />)}
+                        </button>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); handleNextAyah(); }} 
+                            title="الآية التالية" 
+                            aria-label="الآية التالية"
+                            className="p-2.5 sm:p-2 text-text-secondary hover:text-primary hover:bg-surface-hover rounded-full transition-colors active:scale-95 flex items-center justify-center"
+                        >
+                            <ForwardIcon className="w-7 h-7 sm:w-8 sm:h-8" />
+                        </button>
                     </div>
-                    
-                    {/* Controls Left */}
-                    <div className="flex-1 flex justify-end items-center gap-1.5 sm:gap-2">
+
+                    {/* Secondary Actions (Right) */}
+                    <div className="flex items-center justify-center sm:justify-end gap-1.5 sm:gap-2 w-full sm:w-1/3">
                         <button 
                             onClick={(e) => { e.stopPropagation(); handleSpeedChange(); }}
                             title="سرعة التلاوة"
-                            className="px-2 py-1 rounded-lg text-xs font-bold font-mono transition-colors text-text-secondary hover:bg-surface-hover hover:text-primary border border-border-default/60"
+                            aria-label="سرعة التلاوة"
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold font-mono transition-colors text-text-secondary hover:bg-surface-hover hover:text-primary border border-border-default/60"
                         >
                             {playbackSpeed}x
                         </button>
                         <button 
-                            onClick={() => setIsLooping(!isLooping)} 
+                            onClick={(e) => { e.stopPropagation(); setIsLooping(!isLooping); }} 
                             title={isLooping ? "إيقاف تكرار السورة" : "تكرار السورة"} 
+                            aria-label={isLooping ? "إيقاف تكرار السورة" : "تكرار السورة"}
                             className={`p-2 rounded-full transition-colors ${isLooping ? 'text-primary bg-primary/10' : 'text-text-muted hover:bg-surface-hover'}`}
                         >
-                            <RepeatIcon className="w-6 h-6"/>
+                            <RepeatIcon className="w-5 h-5 sm:w-6 sm:h-6"/>
                         </button>
-                        <div className="h-6 w-px bg-border-default mx-1"></div>
-                        <button onClick={() => { setIsModeSelectorOpen(true); }} title="تحديد نطاق القراءة" className={`p-2 rounded-full transition-colors text-text-muted hover:bg-surface-hover`}><BookOpenIcon className="w-6 h-6"/></button>
-                        <button onClick={() => setIsSettingsOpen(true)} title="إعدادات العرض" className="p-2 rounded-full text-text-muted hover:bg-surface-hover transition-colors"><ComputerDesktopIcon className="w-6 h-6"/></button>
+                        <div className="h-5 w-px bg-border-default mx-0.5"></div>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setIsModeSelectorOpen(true); }} 
+                            title="تحديد نطاق القراءة" 
+                            aria-label="تحديد نطاق القراءة"
+                            className="p-2 rounded-full transition-colors text-text-muted hover:bg-surface-hover hover:text-primary"
+                        >
+                            <BookOpenIcon className="w-5 h-5 sm:w-6 sm:h-6"/>
+                        </button>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }} 
+                            title="إعدادات العرض" 
+                            aria-label="إعدادات العرض"
+                            className="p-2 rounded-full text-text-muted hover:bg-surface-hover transition-colors hover:text-primary"
+                        >
+                            <ComputerDesktopIcon className="w-5 h-5 sm:w-6 sm:h-6"/>
+                        </button>
                     </div>
                 </div>
             </footer>
