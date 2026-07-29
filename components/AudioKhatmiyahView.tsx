@@ -9,11 +9,8 @@ import {
     MenuIcon, ChevronDownIcon
 } from './icons';
 import AudioEditionSelector from './AudioEditionSelector';
-import JuzSelectionModal from './khatmiyah/JuzSelectionModal';
-import PlaybackModeModal from './khatmiyah/PlaybackModeModal';
+import KhatmiyahNavigationModal from './khatmiyah/KhatmiyahNavigationModal';
 import SettingsModal from './khatmiyah/SettingsModal';
-import SurahSelectionModal from './khatmiyah/SurahSelectionModal';
-import { QURAN_INDEX } from '../quranIndex';
 import { getQuranTextStyle } from '../utils/font';
 
 interface AudioKhatmiyahViewProps {
@@ -29,6 +26,13 @@ interface AudioKhatmiyahViewProps {
     setIsSidePanelOpen?: (open: boolean) => void;
 }
 
+const formatSeconds = (sec: number): string => {
+    if (isNaN(sec) || sec <= 0) return '00:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+};
+
 const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
     allAyahs, allAudioEditions, initialAyahNumber, onSaveProgress,
     selectedAudioEdition, onAudioEditionChange, allQuranData, fetchCustomEditionData,
@@ -38,11 +42,7 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
     
     const [controlsVisible, setControlsVisible] = useState(true);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [isJuzSelectorOpen, setIsJuzSelectorOpen] = useState(false);
-    const [isSurahSelectorOpen, setIsSurahSelectorOpen] = useState(false);
-    const [isModeSelectorOpen, setIsModeSelectorOpen] = useState(false);
-    const [juzModalMode, setJuzModalMode] = useState<'jump' | 'selection'>('jump');
-    const [surahModalMode, setSurahModalMode] = useState<'jump' | 'selection'>('jump');
+    const [isNavModalOpen, setIsNavModalOpen] = useState(false);
     
     // Fullscreen state management
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -83,8 +83,6 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
         handlePlayPause, handleNextAyah, handlePrevAyah, handleAudioEnded,
         setCurrentAyahNumber, setAudioDuration, setIsLoading, setIsBuffering, setIsPlaying,
         playbackMode, setPlaybackMode, 
-        playbackJuzSelection, setPlaybackJuzSelection,
-        playbackSurahSelection, setPlaybackSurahSelection,
         isLooping, setIsLooping
     } = useAudioKhatmiyah(
         allAyahs, initialAyahNumber, onSaveProgress, selectedAudioEdition, allAudioEditions,
@@ -98,7 +96,7 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
         if (isCurrentlyNativeFS) {
             const exitFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
             if (exitFS) {
-                try { exitFS.call(doc); } catch (e) { /* ignore error */ }
+                try { exitFS.call(doc); } catch (e) { /* ignore */ }
             }
         }
         setIsPseudoFullscreen(false);
@@ -140,12 +138,15 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
 
     const handleHomeClick = (e: React.MouseEvent) => {
         e.preventDefault();
+        e.stopPropagation();
         exitFullscreenMode();
         window.location.hash = '#/';
     };
 
-    const handleScreenTap = () => {
-        if (isPlaying) setControlsVisible(prev => !prev);
+    const handleMainStageClick = () => {
+        if (isPlaying) {
+            setControlsVisible(prev => !prev);
+        }
     };
 
     // Keyboard Shortcuts
@@ -160,10 +161,10 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                 handlePlayPause();
             } else if (e.key === 'ArrowRight') {
                 e.preventDefault();
-                handlePrevAyah();
+                handleNextAyah();
             } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
-                handleNextAyah();
+                handlePrevAyah();
             } else if (e.key.toLowerCase() === 'f') {
                 e.preventDefault();
                 toggleFullscreen();
@@ -221,85 +222,21 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
         }
     }, [playbackSpeed, currentAyah]);
 
-    const handleJuzSelect = (ayahNumber: number) => {
-        setCurrentAyahNumber(ayahNumber);
-        setIsJuzSelectorOpen(false);
-        if (!isPlaying) setIsPlaying(true);
-    };
-    
-    const handleJuzSelectionConfirm = (selectedJuzs: number[]) => {
-        if (selectedJuzs.length === 0) return;
-        setPlaybackMode('selection_juz');
-        setPlaybackJuzSelection(selectedJuzs);
-        setPlaybackSurahSelection(null);
-        const startAyahNumber = juzStartAyahs.find(j => j.juz === selectedJuzs[0])?.ayahNumber;
-        if (startAyahNumber) {
-            setCurrentAyahNumber(startAyahNumber);
-        }
-        setIsJuzSelectorOpen(false);
-        if (!isPlaying) setIsPlaying(true);
-    };
-
     const handleSurahJump = (surahNumber: number) => {
         const firstAyahOfSurah = allAyahs.find(a => a.surah?.number === surahNumber && a.numberInSurah === 1);
         if (firstAyahOfSurah) {
             setCurrentAyahNumber(firstAyahOfSurah.number);
         }
-        setIsSurahSelectorOpen(false);
         if (!isPlaying) setIsPlaying(true);
     };
 
-    const handleSurahSelectionConfirm = (selectedSurahs: number[]) => {
-        if (selectedSurahs.length === 0) return;
-        const sortedSurahs = selectedSurahs.sort((a, b) => a - b);
-        setPlaybackMode('selection_surah');
-        setPlaybackSurahSelection(sortedSurahs);
-        setPlaybackJuzSelection(null);
-        
-        const firstSurahNumber = sortedSurahs[0];
-        const firstAyahOfFirstSurah = allAyahs.find(a => a.surah?.number === firstSurahNumber && a.numberInSurah === 1);
-        
-        if (firstAyahOfFirstSurah) {
-            setCurrentAyahNumber(firstAyahOfFirstSurah.number);
-        }
-        
-        setIsSurahSelectorOpen(false);
+    const handleJuzJump = (ayahNumber: number) => {
+        setCurrentAyahNumber(ayahNumber);
         if (!isPlaying) setIsPlaying(true);
     };
-    
+
     const { className: quranTextClass } = getQuranTextStyle(khatmiyahFontStyle, khatmiyahFontSize);
     const canHighlight = displayEditionDetails?.type === 'quran' && displayEditionDetails?.direction === 'rtl';
-
-    const formatJuzSelection = (juzs: number[]): string => {
-        if (!juzs || juzs.length === 0) return '';
-        if (juzs.length === 1) return `${juzs[0]}`;
-        const sorted = [...juzs].sort((a,b) => a - b);
-        const ranges: string[] = [];
-        let start = sorted[0]; let end = sorted[0];
-        for (let i = 1; i < sorted.length; i++) {
-            if (sorted[i] === end + 1) end = sorted[i];
-            else { ranges.push(start === end ? `${start}` : `${start}-${end}`); start = sorted[i]; end = sorted[i]; }
-        }
-        ranges.push(start === end ? `${start}` : `${start}-${end}`);
-        return ranges.join(', ');
-    };
-
-    const getPlaybackScopeDescription = () => {
-        if (playbackMode === 'single' && currentAyah?.juz) return `الجزء ${currentAyah.juz} فقط`;
-        if (playbackMode === 'selection_juz' && playbackJuzSelection) {
-            const isRange = playbackJuzSelection.every((juz, i) => i === 0 || juz === playbackJuzSelection[i-1] + 1);
-            if (isRange && playbackJuzSelection.length > 1) return `من الجزء ${playbackJuzSelection[0]} إلى ${playbackJuzSelection[playbackJuzSelection.length - 1]}`;
-            return `أجزاء مختارة: ${formatJuzSelection(playbackJuzSelection)}`;
-        }
-        if (playbackMode === 'selection_surah' && playbackSurahSelection) {
-            if (playbackSurahSelection.length > 2) {
-                return `${playbackSurahSelection.length} سور مختارة`;
-            }
-            const surahNames = playbackSurahSelection.map(num => QURAN_INDEX.find(s => s.number === num)?.name.replace('سُورَةُ ', '')).filter(Boolean).join('، ');
-            return `سور مختارة: ${surahNames}`;
-        }
-        return 'ختمة كاملة';
-    };
 
     const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
@@ -333,47 +270,24 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
             className={`bg-background text-text-primary fixed inset-0 flex flex-col font-sans select-none overflow-hidden ${
                 isPseudoFullscreen || isFullscreen ? 'z-[99999]' : 'z-10'
             }`} 
-            onClick={handleScreenTap}
         >
-            {/* Selection Modals */}
-            {isJuzSelectorOpen && (
-                <JuzSelectionModal 
-                    onClose={() => setIsJuzSelectorOpen(false)} 
-                    juzStartAyahs={juzStartAyahs} 
-                    onJuzSelect={handleJuzSelect} 
-                    onSelectionConfirm={handleJuzSelectionConfirm} 
-                    mode={juzModalMode} 
+            {/* Unified Navigation Modal */}
+            {isNavModalOpen && (
+                <KhatmiyahNavigationModal
+                    onClose={() => setIsNavModalOpen(false)}
+                    onSurahSelect={handleSurahJump}
+                    onJuzSelect={handleJuzJump}
+                    juzStartAyahs={juzStartAyahs}
+                    currentSurahNumber={currentAyah.surah?.number}
+                    currentJuzNumber={currentAyah.juz}
+                    playbackMode={playbackMode}
+                    onModeChange={setPlaybackMode}
+                    isLooping={isLooping}
+                    onToggleLooping={() => setIsLooping(!isLooping)}
                 />
             )}
-            {isSurahSelectorOpen && (
-                <SurahSelectionModal 
-                    onClose={() => setIsSurahSelectorOpen(false)} 
-                    onSurahSelect={handleSurahJump} 
-                    onSelectionConfirm={handleSurahSelectionConfirm} 
-                    mode={surahModalMode} 
-                />
-            )}
-            {isModeSelectorOpen && (
-                <PlaybackModeModal 
-                    onClose={() => setIsModeSelectorOpen(false)} 
-                    onModeSelect={(mode: PlaybackMode) => { 
-                        setPlaybackMode(mode); 
-                        setPlaybackJuzSelection(null); 
-                        setPlaybackSurahSelection(null); 
-                        if (mode === 'single' && !isPlaying) setIsPlaying(true); 
-                    }} 
-                    onJuzSelectionStart={() => { 
-                        setIsModeSelectorOpen(false); 
-                        setJuzModalMode('selection'); 
-                        setIsJuzSelectorOpen(true); 
-                    }} 
-                    onSurahSelectionStart={() => { 
-                        setIsModeSelectorOpen(false); 
-                        setSurahModalMode('selection'); 
-                        setIsSurahSelectorOpen(true); 
-                    }} 
-                />
-            )}
+
+            {/* Font & Display Settings Modal */}
             {isSettingsOpen && (
                 <SettingsModal 
                     onClose={() => setIsSettingsOpen(false)} 
@@ -406,6 +320,7 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
             
             {/* Header Bar */}
             <header 
+                onClick={e => e.stopPropagation()}
                 className={`flex-shrink-0 px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between bg-surface/90 backdrop-blur-md border-b border-border-default/40 shadow-md z-20 transition-all duration-300 ${
                     controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'
                 }`}
@@ -424,7 +339,7 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                     )}
                     <button 
                         onClick={handleHomeClick} 
-                        title="العودة للرئيسية وإلغاء ملء الشاشة" 
+                        title="العودة للرئيسية" 
                         aria-label="العودة للرئيسية" 
                         className="p-2 rounded-xl bg-surface-subtle hover:bg-surface-hover text-text-secondary transition-colors active:scale-95"
                     >
@@ -432,31 +347,24 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                     </button>
                 </div>
 
-                {/* Center Title Group: Interactive Surah & Ayah / Juz Selector */}
-                <div className="text-center flex flex-col items-center min-w-0 px-1">
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); setSurahModalMode('jump'); setIsSurahSelectorOpen(true); }}
-                        className="group flex items-center gap-1.5 text-base sm:text-xl font-bold text-text-primary hover:text-primary transition-colors px-2 py-0.5 rounded-lg hover:bg-surface-hover/80 max-w-[200px] sm:max-w-none truncate"
-                        title="انقر لخيارات السورة والقفز السريع"
-                    >
+                {/* Center Title Group: Unified Surah / Ayah / Juz Selector Pill */}
+                <button 
+                    onClick={(e) => { e.stopPropagation(); setIsNavModalOpen(true); }}
+                    className="group flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-surface-subtle/80 hover:bg-surface-hover border border-border-default/50 transition-all shadow-sm active:scale-95 max-w-[240px] sm:max-w-none min-w-0"
+                    title="انقر لاختيار السورة، الجزء، أو نمط التلاوة"
+                >
+                    <BookOpenIcon className="w-4 h-4 text-primary flex-shrink-0" />
+                    <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-text-primary truncate">
                         <span className="truncate">سورة {currentAyah.surah?.name}</span>
-                        <ChevronDownIcon className="w-4 h-4 text-text-muted group-hover:text-primary group-hover:translate-y-0.5 transition-all flex-shrink-0" />
-                    </button>
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); setJuzModalMode('jump'); setIsJuzSelectorOpen(true); }}
-                        className="group flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-text-muted font-semibold px-2 py-0.5 rounded-md hover:bg-surface-hover/80 transition-colors"
-                        title="انقر للقفز السريع للجزء أو الصفحة"
-                    >
-                        <span>الآية: {currentAyah.numberInSurah}</span>
                         <span className="opacity-40">•</span>
-                        <span>الجزء: {currentAyah.juz}</span>
-                        <span className="opacity-40">•</span>
-                        <span>الصفحة: {currentAyah.page}</span>
-                        <ChevronDownIcon className="w-3 h-3 text-text-muted group-hover:text-primary group-hover:translate-y-0.5 transition-all flex-shrink-0" />
-                    </button>
-                </div>
+                        <span className="text-[11px] sm:text-xs text-text-muted font-mono">آية {currentAyah.numberInSurah}</span>
+                        <span className="opacity-40 hidden sm:inline">•</span>
+                        <span className="text-[11px] sm:text-xs text-text-muted hidden sm:inline">جزء {currentAyah.juz}</span>
+                    </div>
+                    <ChevronDownIcon className="w-4 h-4 text-text-muted group-hover:text-primary transition-transform group-hover:translate-y-0.5 flex-shrink-0" />
+                </button>
 
-                {/* Actions Group (Left RTL: Theme, Refresh, Fullscreen) */}
+                {/* Actions Group (Left RTL) */}
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                     <button 
                         onClick={(e) => { e.stopPropagation(); cycleTheme(); }}
@@ -489,8 +397,11 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                 </div>
             </header>
 
-            {/* Main Verses Reading View */}
-            <main className="flex-grow flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
+            {/* Main Verses Reading View Stage */}
+            <main 
+                onClick={handleMainStageClick}
+                className="flex-grow flex items-center justify-center p-4 sm:p-8 overflow-y-auto cursor-pointer"
+            >
                 <div className="text-center w-full max-w-4xl mx-auto my-auto px-2">
                     {(isLoading && !displayedText) ? (
                         <div className="flex flex-col gap-4 items-center">
@@ -527,50 +438,54 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
 
             {/* Bottom Floating Control Bar */}
             <footer 
-                className={`flex-shrink-0 p-3 sm:p-5 bg-surface/95 backdrop-blur-md border-t border-border-default/40 shadow-[0_-4px_30px_rgba(0,0,0,0.15)] z-20 transition-all duration-300 ${
+                onClick={e => e.stopPropagation()}
+                className={`flex-shrink-0 p-3 sm:p-4 bg-surface/95 backdrop-blur-md border-t border-border-default/40 shadow-[0_-4px_30px_rgba(0,0,0,0.15)] z-20 transition-all duration-300 ${
                     controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'
                 }`}
             >
-                <div className="max-w-5xl mx-auto space-y-3">
+                <div className="max-w-4xl mx-auto space-y-2.5">
                     {/* Interactive Audio Progress Bar */}
-                    <div 
-                        className="w-full h-2.5 bg-surface-subtle hover:h-3 rounded-full overflow-hidden cursor-pointer flex items-center transition-all group" 
-                        onClick={handleProgressClick} 
-                        title="انقر للانتقال إلى موقع معين في تلاوة الآية"
-                    >
+                    <div className="flex items-center gap-3">
+                        <span className="text-[11px] font-mono text-text-muted min-w-[36px] text-right">
+                            {formatSeconds(audioProgress)}
+                        </span>
                         <div 
-                            className="h-full bg-primary rounded-full transition-all duration-150 relative" 
-                            style={{ width: audioDuration > 0 ? `${(audioProgress / audioDuration) * 100}%` : '0%'}}
+                            className="flex-grow h-2 bg-surface-subtle hover:h-2.5 rounded-full overflow-hidden cursor-pointer flex items-center transition-all group relative" 
+                            onClick={handleProgressClick} 
+                            title="انقر للانتقال إلى موقع معين في تلاوة الآية"
                         >
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow border border-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div 
+                                className="h-full bg-primary rounded-full transition-all duration-150 relative" 
+                                style={{ width: audioDuration > 0 ? `${(audioProgress / audioDuration) * 100}%` : '0%'}}
+                            >
+                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow border border-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            </div>
                         </div>
+                        <span className="text-[11px] font-mono text-text-muted min-w-[36px] text-left">
+                            {formatSeconds(audioDuration)}
+                        </span>
                     </div>
 
                     {/* Controls Row */}
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4">
                         
-                        {/* Reciter Selector & Scope Info */}
-                        <div className="w-full sm:w-1/3 flex items-center justify-between sm:justify-start gap-2 min-w-0">
-                            <div className="flex-1 sm:flex-none min-w-0">
-                                <AudioEditionSelector 
-                                    audioEditions={allAudioEditions} 
-                                    selectedAudioEdition={selectedAudioEdition} 
-                                    onSelect={onAudioEditionChange} 
-                                    size="sm" 
-                                />
-                            </div>
-                            <span className="text-[11px] sm:text-xs font-semibold text-text-muted truncate max-w-[140px] sm:max-w-xs bg-surface-subtle/80 px-2.5 py-1 rounded-lg border border-border-default/40">
-                                {getPlaybackScopeDescription()}
-                            </span>
+                        {/* Reciter Selector */}
+                        <div className="w-full sm:w-1/3 flex items-center justify-center sm:justify-start min-w-0">
+                            <AudioEditionSelector 
+                                audioEditions={allAudioEditions} 
+                                selectedAudioEdition={selectedAudioEdition} 
+                                onSelect={onAudioEditionChange} 
+                                size="sm" 
+                            />
                         </div>
 
                         {/* Primary Audio Controls (Center) */}
-                        <div className="flex items-center justify-center gap-4 sm:gap-6 w-full sm:w-1/3 my-0.5 sm:my-0 dir-ltr" dir="ltr">
+                        <div className="flex items-center justify-center gap-5 sm:gap-6 w-full sm:w-1/3 my-0.5 sm:my-0 dir-ltr" dir="ltr">
                             <button 
                                 onClick={(e) => { e.stopPropagation(); handlePrevAyah(); }} 
-                                title="الآية السابقة (الرمز لليسار في الواجهة العربية)" 
+                                title="الآية السابقة" 
                                 aria-label="الآية السابقة"
-                                className="p-2.5 sm:p-3 text-text-secondary hover:text-primary hover:bg-surface-hover rounded-full transition-colors active:scale-90 flex items-center justify-center"
+                                className="p-2 sm:p-2.5 text-text-secondary hover:text-primary hover:bg-surface-hover rounded-full transition-colors active:scale-90 flex items-center justify-center"
                             >
                                 <BackwardIcon className="w-7 h-7 sm:w-8 sm:h-8" />
                             </button>
@@ -579,7 +494,7 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                                 onClick={(e) => { e.stopPropagation(); handlePlayPause(); }} 
                                 title={isPlaying ? "إيقاف مؤقت" : "تشغيل التلاوة"}
                                 aria-label={isPlaying ? "إيقاف مؤقت" : "تشغيل التلاوة"}
-                                className="p-3.5 sm:p-4 bg-primary text-white rounded-full shadow-lg hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-primary/30"
+                                className="p-3 sm:p-3.5 bg-primary text-white rounded-full shadow-lg hover:bg-primary-hover transition-transform hover:scale-105 active:scale-95 flex items-center justify-center focus:outline-none focus:ring-4 focus:ring-primary/30"
                             >
                                 {isBuffering ? (
                                     <SpinnerIcon className="w-7 h-7 sm:w-8 sm:h-8 animate-spin"/>
@@ -592,21 +507,21 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
 
                             <button 
                                 onClick={(e) => { e.stopPropagation(); handleNextAyah(); }} 
-                                title="الآية التالية (الرمز لليمين في الواجهة العربية)" 
+                                title="الآية التالية" 
                                 aria-label="الآية التالية"
-                                className="p-2.5 sm:p-3 text-text-secondary hover:text-primary hover:bg-surface-hover rounded-full transition-colors active:scale-90 flex items-center justify-center"
+                                className="p-2 sm:p-2.5 text-text-secondary hover:text-primary hover:bg-surface-hover rounded-full transition-colors active:scale-90 flex items-center justify-center"
                             >
                                 <ForwardIcon className="w-7 h-7 sm:w-8 sm:h-8" />
                             </button>
                         </div>
 
                         {/* Secondary Tools (Left RTL) */}
-                        <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-1/3">
+                        <div className="flex items-center justify-center sm:justify-end gap-1.5 w-full sm:w-1/3">
                             <button 
                                 onClick={(e) => { e.stopPropagation(); handleSpeedChange(); }}
                                 title="سرعة التلاوة"
                                 aria-label="سرعة التلاوة"
-                                className="px-2.5 py-1.5 rounded-xl text-xs font-bold font-mono transition-colors text-text-secondary hover:bg-surface-hover hover:text-primary border border-border-default/60 active:scale-95"
+                                className="px-2 py-1 rounded-xl text-xs font-bold font-mono transition-colors text-text-secondary hover:bg-surface-hover hover:text-primary border border-border-default/60 active:scale-95"
                             >
                                 {playbackSpeed}x
                             </button>
@@ -620,24 +535,23 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                                         : 'text-text-muted hover:bg-surface-hover hover:text-text-primary'
                                 }`}
                             >
-                                <RepeatIcon className="w-5 h-5 sm:w-6 sm:h-6"/>
+                                <RepeatIcon className="w-5 h-5"/>
                             </button>
-                            <div className="h-5 w-px bg-border-default/60 mx-0.5"></div>
                             <button 
-                                onClick={(e) => { e.stopPropagation(); setIsModeSelectorOpen(true); }} 
-                                title="تحديد نطاق القراءة (سور / أجزاء / ختمة)" 
-                                aria-label="تحديد نطاق القراءة"
-                                className="p-2 rounded-xl transition-colors text-text-muted hover:bg-surface-hover hover:text-primary active:scale-95"
+                                onClick={(e) => { e.stopPropagation(); setIsNavModalOpen(true); }} 
+                                title="الانتقال ونطاق التلاوة" 
+                                aria-label="الانتقال ونطاق التلاوة"
+                                className="p-2 rounded-xl text-text-muted hover:bg-surface-hover hover:text-primary transition-colors active:scale-95"
                             >
-                                <BookOpenIcon className="w-5 h-5 sm:w-6 sm:h-6"/>
+                                <BookOpenIcon className="w-5 h-5"/>
                             </button>
                             <button 
                                 onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }} 
-                                title="إعدادات حط ونمط العرض" 
+                                title="إعدادات الخط والنص" 
                                 aria-label="إعدادات الخط والنص"
                                 className="p-2 rounded-xl text-text-muted hover:bg-surface-hover hover:text-primary transition-colors active:scale-95"
                             >
-                                <ComputerDesktopIcon className="w-5 h-5 sm:w-6 sm:h-6"/>
+                                <ComputerDesktopIcon className="w-5 h-5"/>
                             </button>
                         </div>
                     </div>
