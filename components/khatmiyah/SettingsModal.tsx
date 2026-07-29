@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import type { FontSize, FontStyleType } from '../../types';
 import { ClearIcon, TextSizeIcon, BookOpenIcon } from '../icons';
 
@@ -20,8 +21,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, fontSize, onFont
         { label: 'الأكبر', size: 'xxl', className: 'text-2xl' }
     ];
 
-    return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100000] flex items-end sm:items-center justify-center animate-fade-in p-2 sm:p-4" onClick={onClose}>
+    return createPortal(
+        <div className="fixed inset-0 bg-black/80 z-[999999] flex items-end sm:items-center justify-center animate-fade-in p-2 sm:p-4" onClick={onClose}>
             <div 
                 className="bg-surface border border-border-default rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[85vh] transition-all overflow-hidden"
                 onClick={e => e.stopPropagation()}
@@ -72,7 +73,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, fontSize, onFont
                     to { transform: translateY(0); }
                 }
             `}</style>
-        </div>
+        </div>,
+        document.body
     );
 }
 

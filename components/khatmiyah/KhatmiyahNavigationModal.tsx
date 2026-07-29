@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { ClearIcon, SearchIcon, BookOpenIcon } from '../icons';
 import { QURAN_INDEX } from '../../quranIndex';
 import { formatSurahNameForDisplay, normalizeArabicText } from '../../utils/text';
@@ -52,13 +53,13 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
         });
     }, [searchQuery]);
 
-    return (
+    return createPortal(
         <div 
-            className="fixed inset-0 bg-black/75 z-[100000] flex items-center justify-center p-2.5 sm:p-4 animate-fade-in"
+            className="fixed inset-0 bg-black/80 z-[999999] flex items-center justify-center p-2.5 sm:p-4 animate-fade-in"
             onClick={onClose}
         >
             <div 
-                className="bg-surface border border-border-default rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-[88vh] max-h-[650px] sm:max-h-[85vh] overflow-hidden"
+                className="bg-surface border border-border-default rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-[85vh] max-h-[650px] overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Modal Header */}
@@ -248,7 +249,8 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

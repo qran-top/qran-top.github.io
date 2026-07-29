@@ -89,6 +89,27 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
         allQuranData, fetchCustomEditionData, displayEditionIdentifier, juzStartAyahs
     );
 
+    // Fullscreen Event Listener Sync
+    useEffect(() => {
+        const handleFSChange = () => {
+            const doc = document as any;
+            const isFS = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
+            if (!isFS) {
+                setIsFullscreen(false);
+            }
+        };
+        document.addEventListener('fullscreenchange', handleFSChange);
+        document.addEventListener('webkitfullscreenchange', handleFSChange);
+        document.addEventListener('mozfullscreenchange', handleFSChange);
+        document.addEventListener('MSFullscreenChange', handleFSChange);
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFSChange);
+            document.removeEventListener('webkitfullscreenchange', handleFSChange);
+            document.removeEventListener('mozfullscreenchange', handleFSChange);
+            document.removeEventListener('MSFullscreenChange', handleFSChange);
+        };
+    }, []);
+
     // Unstuck Fullscreen Helper
     const exitFullscreenMode = useCallback(() => {
         const doc = document as any;
