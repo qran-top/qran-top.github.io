@@ -21,10 +21,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, fontSize, onFont
     ];
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 flex items-end justify-center animate-fade-in" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100000] flex items-end sm:items-center justify-center animate-fade-in p-2 sm:p-4" onClick={onClose}>
             <div 
-                className="bg-surface rounded-t-2xl shadow-xl w-full max-w-2xl mx-auto flex flex-col max-h-[80vh] transition-transform transform translate-y-4"
-                style={{ animation: 'slide-up 0.3s ease-out forwards' }}
+                className="bg-surface border border-border-default rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[85vh] transition-all overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex-shrink-0 p-4 border-b border-border-default flex justify-between items-center">

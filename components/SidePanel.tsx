@@ -86,9 +86,14 @@ const SidePanel: React.FC<SidePanelProps> = ({
                             >
                                 <UserCircleIcon className="w-5 h-5" />
                             </a>
-                            <span className="text-[10px] font-mono text-text-subtle select-none">
-                                v1.0.10
-                            </span>
+                            <button 
+                                onClick={() => window.location.reload()}
+                                className="text-[11px] font-mono text-text-muted hover:text-primary transition-colors cursor-pointer select-none px-2 py-1 rounded bg-surface-subtle hover:bg-surface-hover border border-border-default/40 flex items-center gap-1 active:scale-95"
+                                title="انقر هنا لإعادة تحميل التطبيق وتحديث الإصدار"
+                            >
+                                <span>v1.0.10</span>
+                                <span className="text-[10px]">🔄</span>
+                            </button>
                         </div>
                     </div>
                 </div>

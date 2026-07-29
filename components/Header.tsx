@@ -22,7 +22,11 @@ interface HeaderProps {
 const Logo: React.FC<{ dataSourceStatus: 'primary' | 'fallback'; isHomePage: boolean }> = ({ dataSourceStatus, isHomePage }) => {
     const [adminClickCount, setAdminClickCount] = useState(0);
 
-    const handleLogoClick = () => {
+    const handleLogoClick = (e: React.MouseEvent) => {
+        if (e.detail === 2) {
+            window.location.reload();
+            return;
+        }
         const newCount = adminClickCount + 1;
         setAdminClickCount(newCount);
         if (newCount >= 12) {
@@ -35,10 +39,22 @@ const Logo: React.FC<{ dataSourceStatus: 'primary' | 'fallback'; isHomePage: boo
         window.location.hash = '#/';
     };
 
+    const handleDoubleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        window.location.reload();
+    };
+
     const dotColorClass = dataSourceStatus === 'primary' ? 'text-green-500' : 'text-red-500';
 
     return (
-        <div onClick={handleLogoClick} dir="ltr" className="flex items-center gap-1.5 sm:gap-2 cursor-pointer select-none pl-1" title="الرجوع للرئيسية">
+        <div 
+            onClick={handleLogoClick} 
+            onDoubleClick={handleDoubleClick}
+            dir="ltr" 
+            className="flex items-center gap-1.5 sm:gap-2 cursor-pointer select-none pl-1 active:scale-95 transition-transform" 
+            title="انقر للرئيسية - انقر مرتين لإعادة تحميل وتحديث التطبيق"
+        >
             <LogoIcon className="w-7 h-7 text-primary flex-shrink-0" />
             <span className="text-xl font-bold text-text-primary tracking-tighter">
                 QRAN<span className={dotColorClass}>.</span>TOP

@@ -11,8 +11,8 @@ interface PlaybackModeModalProps {
 
 const PlaybackModeModal: React.FC<PlaybackModeModalProps> = ({ onClose, onModeSelect, onJuzSelectionStart, onSurahSelectionStart }) => {
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4" onClick={onClose}>
-            <div className="bg-surface rounded-lg shadow-xl w-full max-w-md mx-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100000] flex items-center justify-center animate-fade-in p-4" onClick={onClose}>
+            <div className="bg-surface rounded-2xl border border-border-default shadow-2xl w-full max-w-md mx-auto overflow-hidden" onClick={e => e.stopPropagation()}>
                 <div className="p-4 border-b border-border-default flex justify-between items-center">
                     <h2 className="text-xl font-bold text-text-primary">تحديد نطاق القراءة</h2>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-surface-hover"><ClearIcon className="w-5 h-5" /></button>
