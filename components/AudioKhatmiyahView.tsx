@@ -43,8 +43,10 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
     const [isSurahSelectorOpen, setIsSurahSelectorOpen] = useState(false);
     const [isModeSelectorOpen, setIsModeSelectorOpen] = useState(false);
     const [juzModalMode, setJuzModalMode] = useState<'jump' | 'selection'>('jump');
+    const [surahModalMode, setSurahModalMode] = useState<'jump' | 'selection'>('jump');
     const [isFullscreen, setIsFullscreen] = useState(false);
-    
+    const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
+
     // Playback Speed State
     const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
     
@@ -89,23 +91,31 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
         if (isPlaying) setControlsVisible(prev => !prev);
     };
 
-    const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
-
     const toggleFullscreen = () => {
         const docEl = document.documentElement as any;
         const doc = document as any;
         const isCurrentlyNativeFS = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
 
-        if (!isCurrentlyNativeFS && !isPseudoFullscreen) {
+        if (isFullscreen || isPseudoFullscreen || isCurrentlyNativeFS) {
+            // Exit fullscreen
+            if (isCurrentlyNativeFS) {
+                const exitFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+                if (exitFS) {
+                    try { exitFS.call(doc); } catch (e) { /* ignore */ }
+                }
+            }
+            setIsPseudoFullscreen(false);
+            setIsFullscreen(false);
+        } else {
+            // Enter fullscreen
             const reqFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
             if (reqFS) {
                 try {
-                    const promise = reqFS.call(docEl);
-                    if (promise && promise.then) {
-                        promise.then(() => {
+                    const res = reqFS.call(docEl);
+                    if (res && res.then) {
+                        res.then(() => {
                             setIsFullscreen(true);
                         }).catch(() => {
-                            // Fallback to pseudo-fullscreen on rejection
                             setIsPseudoFullscreen(true);
                             setIsFullscreen(true);
                         });
@@ -117,17 +127,9 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                     setIsFullscreen(true);
                 }
             } else {
-                // Native fullscreen unsupported (e.g. mobile Safari / WebView)
                 setIsPseudoFullscreen(true);
                 setIsFullscreen(true);
             }
-        } else {
-            const exitFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
-            if (exitFS && isCurrentlyNativeFS) {
-                try { doc.exitFullscreen(); } catch (e) {}
-            }
-            setIsPseudoFullscreen(false);
-            setIsFullscreen(false);
         }
     };
 
@@ -142,16 +144,25 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
             }
         };
 
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsPseudoFullscreen(false);
+                setIsFullscreen(false);
+            }
+        };
+
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
         document.addEventListener('mozfullscreenchange', handleFullscreenChange);
         document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+        window.addEventListener('keydown', handleKeyDown);
 
         return () => {
             document.removeEventListener('fullscreenchange', handleFullscreenChange);
             document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
             document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
             document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+            window.removeEventListener('keydown', handleKeyDown);
         };
     }, [isPseudoFullscreen]);
 
@@ -198,6 +209,15 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
             setCurrentAyahNumber(startAyahNumber);
         }
         setIsJuzSelectorOpen(false);
+        if (!isPlaying) setIsPlaying(true);
+    };
+
+    const handleSurahJump = (surahNumber: number) => {
+        const firstAyahOfSurah = allAyahs.find(a => a.surah?.number === surahNumber && a.numberInSurah === 1);
+        if (firstAyahOfSurah) {
+            setCurrentAyahNumber(firstAyahOfSurah.number);
+        }
+        setIsSurahSelectorOpen(false);
         if (!isPlaying) setIsPlaying(true);
     };
 
@@ -270,10 +290,10 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
     }
 
     return (
-        <div className="bg-background text-text-primary fixed inset-0 flex flex-col font-sans" onClick={handleScreenTap}>
+        <div className={`bg-background text-text-primary fixed inset-0 flex flex-col font-sans ${isPseudoFullscreen || isFullscreen ? 'z-[99999]' : 'z-10'}`} onClick={handleScreenTap}>
             {isJuzSelectorOpen && <JuzSelectionModal onClose={() => setIsJuzSelectorOpen(false)} juzStartAyahs={juzStartAyahs} onJuzSelect={handleJuzSelect} onSelectionConfirm={handleJuzSelectionConfirm} mode={juzModalMode} />}
-            {isSurahSelectorOpen && <SurahSelectionModal onClose={() => setIsSurahSelectorOpen(false)} onSelectionConfirm={handleSurahSelectionConfirm} />}
-            {isModeSelectorOpen && <PlaybackModeModal onClose={() => setIsModeSelectorOpen(false)} onModeSelect={(mode: PlaybackMode) => { setPlaybackMode(mode); setPlaybackJuzSelection(null); setPlaybackSurahSelection(null); if (mode === 'single' && !isPlaying) setIsPlaying(true); }} onJuzSelectionStart={() => { setIsModeSelectorOpen(false); setJuzModalMode('selection'); setIsJuzSelectorOpen(true); }} onSurahSelectionStart={() => { setIsModeSelectorOpen(false); setIsSurahSelectorOpen(true); }} />}
+            {isSurahSelectorOpen && <SurahSelectionModal onClose={() => setIsSurahSelectorOpen(false)} onSurahSelect={handleSurahJump} onSelectionConfirm={handleSurahSelectionConfirm} mode={surahModalMode} />}
+            {isModeSelectorOpen && <PlaybackModeModal onClose={() => setIsModeSelectorOpen(false)} onModeSelect={(mode: PlaybackMode) => { setPlaybackMode(mode); setPlaybackJuzSelection(null); setPlaybackSurahSelection(null); if (mode === 'single' && !isPlaying) setIsPlaying(true); }} onJuzSelectionStart={() => { setIsModeSelectorOpen(false); setJuzModalMode('selection'); setIsJuzSelectorOpen(true); }} onSurahSelectionStart={() => { setIsModeSelectorOpen(false); setSurahModalMode('selection'); setIsSurahSelectorOpen(true); }} />}
             {isSettingsOpen && <SettingsModal onClose={() => setIsSettingsOpen(false)} fontSize={khatmiyahFontSize} onFontSizeChange={setKhatmiyahFontSize} fontStyle={khatmiyahFontStyle} onFontStyleChange={setKhatmiyahFontStyle} />}
 
             <audio ref={audioRef} onLoadedMetadata={() => setAudioDuration(audioRef.current?.duration || 0)} onCanPlay={() => { setIsLoading(false); setIsBuffering(false); if(isPlaying) audioRef.current?.play(); }} onPlay={() => setIsPlaying(true)} onPause={() => { if (audioRef.current && Math.abs(audioRef.current.currentTime - audioRef.current.duration) > 0.1) setIsPlaying(false); }} onEnded={handleAudioEnded} onWaiting={() => setIsBuffering(true)} className="hidden" />
@@ -299,7 +319,7 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                 {/* Center Group: Interactive Surah & Ayah / Juz Selectors */}
                 <div className="text-center flex flex-col items-center">
                     <button 
-                        onClick={(e) => { e.stopPropagation(); setIsSurahSelectorOpen(true); }}
+                        onClick={(e) => { e.stopPropagation(); setSurahModalMode('jump'); setIsSurahSelectorOpen(true); }}
                         className="group flex items-center gap-1.5 text-lg sm:text-xl font-bold text-text-primary hover:text-primary transition-colors px-2.5 py-0.5 rounded-lg hover:bg-surface-hover/80"
                         title="انقر لخيارات السورة"
                     >
@@ -332,9 +352,10 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                     <button 
                         onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }}
                         className="p-2 rounded-full bg-surface-subtle hover:bg-surface-hover text-text-secondary transition-colors"
-                        title={isFullscreen ? "إنهاء ملء الشاشة" : "ملء الشاشة"}
+                        title={isFullscreen || isPseudoFullscreen ? "إلغاء ملء الشاشة" : "ملء الشاشة"}
+                        aria-label={isFullscreen || isPseudoFullscreen ? "إلغاء ملء الشاشة" : "ملء الشاشة"}
                     >
-                        {isFullscreen ? <ArrowsPointingInIcon className="w-6 h-6" /> : <ArrowsPointingOutIcon className="w-6 h-6" />}
+                        {isFullscreen || isPseudoFullscreen ? <ArrowsPointingInIcon className="w-6 h-6 text-primary" /> : <ArrowsPointingOutIcon className="w-6 h-6" />}
                     </button>
                 </div>
             </header>
