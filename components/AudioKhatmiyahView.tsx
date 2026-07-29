@@ -110,29 +110,39 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
 
         if (isFullscreen || isPseudoFullscreen || isCurrentlyNativeFS) {
             exitFullscreenMode();
-        } else {
-            const reqFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-            if (reqFS) {
-                try {
-                    const res = reqFS.call(docEl);
-                    if (res && res.then) {
-                        res.then(() => {
-                            setIsFullscreen(true);
-                        }).catch(() => {
-                            setIsPseudoFullscreen(true);
-                            setIsFullscreen(true);
-                        });
-                    } else {
+            return;
+        }
+
+        const isAndroidOrMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // On Android WebViews and mobile devices, use CSS pseudo-fullscreen for 100% reliability
+        if (isAndroidOrMobile || !doc.fullscreenEnabled) {
+            setIsPseudoFullscreen(true);
+            setIsFullscreen(true);
+            return;
+        }
+
+        const reqFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+        if (reqFS) {
+            try {
+                const res = reqFS.call(docEl);
+                if (res && res.then) {
+                    res.then(() => {
                         setIsFullscreen(true);
-                    }
-                } catch (e) {
-                    setIsPseudoFullscreen(true);
+                    }).catch(() => {
+                        setIsPseudoFullscreen(true);
+                        setIsFullscreen(true);
+                    });
+                } else {
                     setIsFullscreen(true);
                 }
-            } else {
+            } catch (e) {
                 setIsPseudoFullscreen(true);
                 setIsFullscreen(true);
             }
+        } else {
+            setIsPseudoFullscreen(true);
+            setIsFullscreen(true);
         }
     }, [isFullscreen, isPseudoFullscreen, exitFullscreenMode]);
 

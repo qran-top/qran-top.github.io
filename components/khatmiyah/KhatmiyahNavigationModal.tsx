@@ -54,11 +54,11 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
 
     return (
         <div 
-            className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100000] flex items-center justify-center p-3 sm:p-4 animate-fade-in"
+            className="fixed inset-0 bg-black/75 z-[100000] flex items-center justify-center p-2.5 sm:p-4 animate-fade-in"
             onClick={onClose}
         >
             <div 
-                className="bg-surface border border-border-default/80 rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden"
+                className="bg-surface border border-border-default rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-[88vh] max-h-[650px] sm:max-h-[85vh] overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Modal Header */}
@@ -156,7 +156,6 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="ابحث باسم السورة أو رقمها (مثال: البقرة، 36، الكهف)..."
                                     className="w-full pl-9 pr-10 py-2 bg-surface-subtle border border-border-default rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                                    autoFocus
                                 />
                                 {searchQuery && (
                                     <button
