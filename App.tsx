@@ -254,6 +254,7 @@ const App: React.FC = () => {
                             setIsSearching={setIsSearching}
                             performSearchByAyahNumber={performSearchByAyahNumber}
                             performSearch={performSearch}
+                            setIsSidePanelOpen={setIsSidePanelOpen}
                         />
                     </main>
 

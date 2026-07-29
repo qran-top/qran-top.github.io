@@ -44,6 +44,7 @@ interface AppRouterProps {
     setIsSearching: (isSearching: boolean) => void;
     performSearchByAyahNumber: (num: number) => Ayah[];
     performSearch: (query: string, isRootSearch?: boolean) => { results: Ayah[], finalSearchEdition: string, correctedQuery?: string };
+    setIsSidePanelOpen?: (open: boolean) => void;
 }
 
 const AppRouter: React.FC<AppRouterProps> = (props) => {
@@ -54,7 +55,8 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
         handleDeleteCollection, handleDeleteSavedItem, updateItemNotes, handleExportNotebook,
         handleImportNotebook, handleSearch, handleSaveItem,
         handleSearchByAyahNumber, currentlyPlayingAyahGlobalNumber, playbackInfo, handleStartPlayback,
-        hizbQuarterStartMap, setIsSearching, performSearchByAyahNumber, performSearch
+        hizbQuarterStartMap, setIsSearching, performSearchByAyahNumber, performSearch,
+        setIsSidePanelOpen
     } = props;
 
     // Use Context for AudioEditions and selections
@@ -89,6 +91,7 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
             allQuranData={allQuranData}
             fetchCustomEditionData={fetchCustomEditionData}
             activeEditions={activeEditions}
+            setIsSidePanelOpen={setIsSidePanelOpen}
         />;
     }
     if (pathParts[0] === 'saved') return <SavedView collections={collections} collectionId={pathParts[1] || null} onDeleteCollection={handleDeleteCollection} onDeleteSavedItem={handleDeleteSavedItem} onUpdateNotes={updateItemNotes} />;
