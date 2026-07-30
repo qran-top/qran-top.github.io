@@ -37,7 +37,7 @@ const AudioEditionSelector: React.FC<AudioEditionSelectorProps> = ({ audioEditio
                     aria-label="اختيار القارئ"
                 >
                     {audioEditions.map(edition => (
-                        <option key={edition.identifier} value={edition.identifier}>
+                        <option key={edition.identifier} value={edition.identifier} className="bg-surface text-text-primary dark:bg-slate-900 dark:text-white py-2">
                             {edition.name}
                         </option>
                     ))}
@@ -56,7 +56,7 @@ const AudioEditionSelector: React.FC<AudioEditionSelectorProps> = ({ audioEditio
                 aria-label="اختيار القارئ"
             >
                 {audioEditions.map(edition => (
-                    <option key={edition.identifier} value={edition.identifier}>
+                    <option key={edition.identifier} value={edition.identifier} className="bg-surface text-text-primary dark:bg-slate-900 dark:text-white py-2">
                         {edition.name}
                     </option>
                 ))}
