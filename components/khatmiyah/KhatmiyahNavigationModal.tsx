@@ -80,12 +80,11 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
                 </div>
 
                 {/* Scope Mode Selection Bar */}
-                <div className="flex-shrink-0 p-2.5 sm:p-3 bg-surface border-b border-border-default/60 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
-                    <div className="flex items-center gap-1.5 text-xs">
-                        <span className="font-bold text-text-muted whitespace-nowrap hidden sm:inline">نمط التشغيل:</span>
+                <div className="flex-shrink-0 p-2 sm:p-2.5 bg-surface border-b border-border-default/60 flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 sm:gap-2">
+                    <div className="flex items-center gap-1.5 text-xs w-full sm:w-auto justify-stretch sm:justify-start">
                         <button
                             onClick={() => onModeChange('continuous')}
-                            className={`px-3 py-1.5 rounded-xl font-semibold transition-all whitespace-nowrap text-xs ${
+                            className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-xl font-semibold transition-all whitespace-nowrap text-xs text-center ${
                                 playbackMode === 'continuous' && !isLooping
                                     ? 'bg-primary text-white shadow-sm' 
                                     : 'bg-surface-subtle text-text-secondary hover:bg-surface-hover'
@@ -95,7 +94,7 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
                         </button>
                         <button
                             onClick={() => onModeChange('single')}
-                            className={`px-3 py-1.5 rounded-xl font-semibold transition-all whitespace-nowrap text-xs ${
+                            className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-xl font-semibold transition-all whitespace-nowrap text-xs text-center ${
                                 playbackMode === 'single'
                                     ? 'bg-primary text-white shadow-sm' 
                                     : 'bg-surface-subtle text-text-secondary hover:bg-surface-hover'
@@ -107,7 +106,7 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
 
                     <button
                         onClick={onToggleLooping}
-                        className={`px-3 py-1.5 rounded-xl font-semibold transition-all whitespace-nowrap text-xs flex items-center gap-1.5 ${
+                        className={`w-full sm:w-auto px-2.5 sm:px-3 py-1.5 rounded-xl font-semibold transition-all whitespace-nowrap text-xs flex items-center justify-center gap-1.5 ${
                             isLooping
                                 ? 'bg-amber-500 text-white shadow-sm' 
                                 : 'bg-surface-subtle text-text-secondary hover:bg-surface-hover'
@@ -169,7 +168,7 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
                         </div>
 
                         {/* Surahs Grid */}
-                        <div className="flex-grow p-3 sm:p-4 overflow-y-auto custom-scrollbar">
+                        <div className="flex-grow min-h-0 p-3 sm:p-4 overflow-y-auto custom-scrollbar">
                             {filteredSurahs.length === 0 ? (
                                 <div className="text-center py-10 text-text-muted">
                                     <p className="text-sm font-semibold">لم يتم العثور على سورة باسم "{searchQuery}"</p>
@@ -222,7 +221,7 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
 
                 {/* Tab Content: Juzs */}
                 {activeTab === 'juzs' && (
-                    <div className="flex-grow p-3 sm:p-4 overflow-y-auto custom-scrollbar bg-background/40">
+                    <div className="flex-grow min-h-0 p-3 sm:p-4 overflow-y-auto custom-scrollbar bg-background/40">
                         <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                             {juzStartAyahs.map(({ juz, ayahNumber }) => {
                                 const isCurrent = currentJuzNumber === juz;

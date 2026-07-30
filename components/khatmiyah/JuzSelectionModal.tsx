@@ -52,7 +52,7 @@ const JuzSelectionModal: React.FC<JuzSelectionModalProps> = ({ onClose, juzStart
                         <ClearIcon className="w-5 h-5" />
                     </button>
                 </div>
-                <div className="p-4 overflow-y-auto custom-scrollbar">
+                <div className="p-4 overflow-y-auto custom-scrollbar flex-grow min-h-0">
                     <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
                         {juzStartAyahs.map(({ juz, ayahNumber }) => {
                             const isSelected = mode === 'selection' && selectedJuzs.includes(juz);

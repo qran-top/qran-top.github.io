@@ -126,7 +126,7 @@ const SurahSelectionModal: React.FC<SurahSelectionModalProps> = ({
                 </div>
 
                 {/* Surahs List Grid */}
-                <div className="flex-grow p-3 sm:p-4 overflow-y-auto custom-scrollbar bg-background/50">
+                <div className="flex-grow min-h-0 p-3 sm:p-4 overflow-y-auto custom-scrollbar bg-background/50">
                     {filteredSurahs.length === 0 ? (
                         <div className="text-center py-10 text-text-muted">
                             <p className="text-sm font-semibold">لم يتم العثور على أي سورة مطابقة للبحث "{searchQuery}"</p>
