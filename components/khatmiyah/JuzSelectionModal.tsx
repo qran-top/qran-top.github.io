@@ -34,11 +34,12 @@ const JuzSelectionModal: React.FC<JuzSelectionModalProps> = ({ onClose, juzStart
     
     return (
         <div 
-            className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100000] flex items-center justify-center animate-fade-in p-3 sm:p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100000] flex flex-col items-center justify-center animate-fade-in p-3 sm:p-4 h-full w-full overflow-hidden"
             onClick={onClose}
         >
             <div 
-                className="bg-surface border border-border-default rounded-2xl shadow-2xl w-full max-w-lg mx-auto flex flex-col overflow-hidden max-h-[85vh]"
+                className="bg-surface border border-border-default rounded-2xl shadow-2xl w-full max-w-lg mx-auto flex flex-col overflow-hidden h-[80%] sm:h-[80vh] max-h-[600px] min-h-[350px]"
+                style={{ height: '80%', maxHeight: '600px', minHeight: '350px' }}
                 onClick={e => e.stopPropagation()}
             >
                 <div className="p-4 border-b border-border-default flex justify-between items-center bg-surface-subtle/50">

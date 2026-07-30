@@ -66,11 +66,12 @@ const SurahSelectionModal: React.FC<SurahSelectionModalProps> = ({
 
     return (
         <div 
-            className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100000] flex items-center justify-center p-3 sm:p-4 animate-fade-in"
+            className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100000] flex flex-col items-center justify-center p-3 sm:p-4 animate-fade-in h-full w-full overflow-hidden"
             onClick={onClose}
         >
             <div 
-                className="bg-surface border border-border-default/80 rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden"
+                className="bg-surface border border-border-default/80 rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-[85%] sm:h-[85vh] max-h-[650px] min-h-[350px] overflow-hidden"
+                style={{ height: '85%', maxHeight: '650px', minHeight: '350px' }}
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}

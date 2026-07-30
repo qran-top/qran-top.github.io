@@ -54,11 +54,12 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
 
     return (
         <div 
-            className="fixed inset-0 bg-black/80 z-[100000] flex items-center justify-center p-2.5 sm:p-4 animate-fade-in"
+            className="fixed inset-0 bg-black/80 z-[100000] flex flex-col items-center justify-center p-2.5 sm:p-4 animate-fade-in h-full w-full overflow-hidden"
             onClick={onClose}
         >
             <div 
-                className="bg-surface border border-border-default rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-[85vh] max-h-[650px] min-h-[300px] overflow-hidden"
+                className="bg-surface border border-border-default rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-[85%] sm:h-[85vh] max-h-[650px] min-h-[350px] overflow-hidden"
+                style={{ height: '85%', maxHeight: '650px', minHeight: '350px' }}
                 onClick={e => e.stopPropagation()}
             >
                 {/* Modal Header */}
@@ -144,7 +145,7 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
 
                 {/* Tab Content: Surahs */}
                 {activeTab === 'surahs' && (
-                    <div className="flex-grow flex flex-col min-h-0 bg-background/40">
+                    <div className="flex-grow flex-1 flex flex-col min-h-0 h-full overflow-hidden bg-background/40">
                         {/* Search Bar */}
                         <div className="flex-shrink-0 p-2.5 sm:p-3 border-b border-border-default/60 bg-surface">
                             <div className="relative flex items-center">
@@ -221,7 +222,7 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
 
                 {/* Tab Content: Juzs */}
                 {activeTab === 'juzs' && (
-                    <div className="flex-grow min-h-0 p-3 sm:p-4 overflow-y-auto custom-scrollbar bg-background/40">
+                    <div className="flex-grow flex-1 min-h-0 h-full p-3 sm:p-4 overflow-y-auto custom-scrollbar bg-background/40">
                         <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                             {juzStartAyahs.map(({ juz, ayahNumber }) => {
                                 const isCurrent = currentJuzNumber === juz;
