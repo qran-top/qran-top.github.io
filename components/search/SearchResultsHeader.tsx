@@ -103,7 +103,7 @@ const SearchResultsHeader: React.FC<SearchResultsHeaderProps> = ({
     }, [displayedResults]);
 
     return (
-        <div className="mb-4 p-4 bg-surface-subtle rounded-lg border border-border-default">
+        <div className="mb-4 p-3 sm:p-4 bg-surface-subtle rounded-lg border border-border-default w-full max-w-full overflow-hidden">
             {correctedQuery && !isRootSearch && (
                 <div className="mb-4 p-4 bg-blue-500/10 border-l-4 border-blue-500 text-text-secondary rounded-r-lg">
                     <p>لم نجد نتائج لـ "{query}". نعرض لك نتائج لأقرب كلمة: <strong>{correctedQuery}</strong>.</p>

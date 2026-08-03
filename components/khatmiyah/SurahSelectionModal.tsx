@@ -70,7 +70,7 @@ const SurahSelectionModal: React.FC<SurahSelectionModalProps> = ({
             onClick={onClose}
         >
             <div 
-                className="bg-surface border border-border-default/80 rounded-2xl shadow-2xl w-full max-w-2xl mx-auto flex flex-col h-[85%] sm:h-[85vh] max-h-[650px] min-h-[350px] overflow-hidden"
+                className="bg-surface border border-border-default/80 rounded-2xl shadow-2xl w-full max-w-2xl max-w-[calc(100vw-1.25rem)] mx-auto flex flex-col h-[85%] sm:h-[85vh] max-h-[650px] min-h-[350px] overflow-hidden"
                 style={{ height: '85%', maxHeight: '650px', minHeight: '350px' }}
                 onClick={e => e.stopPropagation()}
             >
@@ -143,7 +143,7 @@ const SurahSelectionModal: React.FC<SurahSelectionModalProps> = ({
                                     <button
                                         key={surah.number}
                                         onClick={() => handleSurahClick(surah.number)}
-                                        className={`p-2.5 sm:p-3 rounded-xl text-right flex items-center justify-between transition-all duration-200 border focus:outline-none focus:ring-2 focus:ring-primary ${
+                                        className={`w-full min-w-0 p-2.5 sm:p-3 rounded-xl text-right flex items-center justify-between transition-all duration-200 border focus:outline-none focus:ring-2 focus:ring-primary ${
                                             isSelected 
                                                 ? 'bg-primary/15 border-primary ring-1 ring-primary text-primary-text-strong shadow-sm' 
                                                 : 'bg-surface border-border-default/60 hover:bg-surface-hover hover:border-primary/50 text-text-primary'

@@ -171,7 +171,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
     return (
         <li
             ref={itemRef}
-            className={`p-4 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg ${isCurrentlyPlaying ? 'bg-yellow-300/60 dark:bg-yellow-400/30 ring-2 ring-yellow-500' : 'bg-surface-subtle'}`}
+            className={`p-3 sm:p-4 rounded-xl shadow-sm transition-all duration-300 hover:shadow-lg w-full max-w-full overflow-hidden break-words ${isCurrentlyPlaying ? 'bg-yellow-300/60 dark:bg-yellow-400/30 ring-2 ring-yellow-500' : 'bg-surface-subtle'}`}
         >
             <div className="flex justify-between items-center mb-2 gap-4">
                 <div className="flex items-center gap-2 flex-wrap">

@@ -22,9 +22,9 @@ const SearchResultsToolbar: React.FC<SearchResultsToolbarProps> = ({
     onDownloadAll
 }) => {
     return (
-        <div className="flex items-center flex-wrap gap-2 my-6 p-3 bg-surface-subtle rounded-lg border border-border-default">
+        <div className="flex items-center flex-wrap gap-2 my-6 p-3 bg-surface-subtle rounded-lg border border-border-default w-full max-w-full overflow-hidden">
             <span className="text-sm font-semibold text-text-muted ml-2">أدوات النتائج:</span>
-            <div className="inline-flex items-center gap-2 border border-border-default rounded-full bg-surface p-1 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2 border border-border-default rounded-2xl sm:rounded-full bg-surface p-1 shadow-sm max-w-full">
                 <button onClick={onPlayAll} disabled={isPlaybackLoading || allAudioEditions.length === 0} className="flex items-center gap-2 px-3 py-1 rounded-full text-sm text-text-secondary hover:bg-surface-hover transition-colors disabled:opacity-70 disabled:cursor-not-allowed">
                     {isPlaybackLoading ? <SpinnerIcon className="w-4 h-4"/> : <PlayIcon className="w-4 h-4"/>}
                     <span>{isPlaybackLoading ? 'تحضير...' : 'تشغيل الكل'}</span>

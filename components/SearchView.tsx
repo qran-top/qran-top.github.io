@@ -198,14 +198,14 @@ export const SearchView: React.FC<SearchViewProps> = ({
   };
 
   return (
-    <div className="animate-fade-in w-full max-w-4xl mx-auto px-4">
+    <div className="animate-fade-in w-full max-w-4xl mx-auto px-2 sm:px-4 overflow-x-hidden">
       {searchType !== 'number' && (
-          <div className="mb-6 flex flex-col gap-3">
+          <div className="mb-6 flex flex-col gap-3 max-w-full">
               <NeighboringWords neighboringWords={neighboringWords} visibleSuggestionsCount={visibleSuggestionsCount} onNeighborClick={(word) => onNewSearch(`${editableQuery.trim()} ${word}`)} onShowMore={handleShowMore}/>
           </div>
       )}
       
-      <main className="bg-surface p-6 sm:p-8 rounded-lg shadow-md transition-colors duration-300">
+      <main className="bg-surface p-3.5 sm:p-6 md:p-8 rounded-lg shadow-md transition-colors duration-300 w-full max-w-full overflow-hidden">
         <PhraseFilters phraseFilters={phraseFilters} activePhraseFilter={activePhraseFilter} setActivePhraseFilter={setActivePhraseFilter} resultsCount={results.length}/>
         <SearchResultsHeader 
             searchType={searchType} query={query} correctedQuery={correctedQuery}
