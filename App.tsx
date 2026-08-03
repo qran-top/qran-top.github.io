@@ -95,11 +95,16 @@ const App: React.FC = () => {
     }, []);
     
     // --- UI Effects ---
-    useEffect(() => {
-        const checkScrollTop = () => setShowScroll(window.pageYOffset > 400);
-        window.addEventListener('scroll', checkScrollTop);
-        return () => window.removeEventListener('scroll', checkScrollTop);
+    const checkScrollTop = useCallback(() => {
+        const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        setShowScroll(scrollTop > 300);
     }, []);
+
+    useEffect(() => {
+        window.addEventListener('scroll', checkScrollTop, { passive: true });
+        checkScrollTop();
+        return () => window.removeEventListener('scroll', checkScrollTop);
+    }, [currentPath, checkScrollTop]);
 
     useEffect(() => {
         if (!isInitialLoading) {
@@ -132,7 +137,15 @@ const App: React.FC = () => {
 
 
     // --- Other Handlers ---
-    const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    const scrollToTop = () => {
+        try {
+            window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+        } catch {
+            window.scrollTo(0, 0);
+        }
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+    };
 
     // --- Data Derivations for Views ---
     const quranData = useMemo(() => allQuranData?.[selectedEdition], [allQuranData, selectedEdition]);
@@ -270,7 +283,18 @@ const App: React.FC = () => {
                         onEnded={handleNext} onClose={handleClosePlayback}
                         audioEdition={selectedAudioEditionDetails}
                     />}
-                    {showScroll && !isAudioKhatmiyahPage && <button onClick={scrollToTop} className={`fixed left-8 p-4 bg-primary text-white rounded-full shadow-lg hover:bg-primary-hover transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 ${!!playbackInfo ? 'bottom-28' : 'bottom-8'}`} aria-label="الانتقال إلى الأعلى"><ArrowUpIcon className="w-6 h-6" /></button>}
+                    {showScroll && !isAudioKhatmiyahPage && (
+                        <button 
+                            onClick={scrollToTop} 
+                            className={`fixed left-4 sm:left-8 z-50 p-3.5 sm:p-4 bg-primary text-white rounded-full shadow-2xl hover:bg-primary-hover active:scale-95 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 cursor-pointer ${
+                                !!playbackInfo ? 'bottom-28' : 'bottom-8'
+                            }`} 
+                            aria-label="الانتقال إلى الأعلى"
+                            title="الصعود للأعلى"
+                        >
+                            <ArrowUpIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </button>
+                    )}
                 {showUpdateNotification && <UpdateNotification onUpdate={handleUpdate} />}
             </div>
         </SettingsProvider>

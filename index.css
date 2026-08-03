@@ -252,6 +252,14 @@ html.dark .animate-highlight-pulse {
   animation: pulse-mic 1.5s ease-in-out infinite;
 }
 
+/* --- Text Justification for Quranic & Spelling Text --- */
+.text-justify,
+.mushaf-page main {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+  -webkit-text-justify: inter-word !important;
+}
+
 /* --- Mushaf Page Styles (Theme-Aware) --- */
 .mushaf-page {
   border: 10px solid;

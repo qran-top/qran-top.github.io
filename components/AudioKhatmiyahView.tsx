@@ -433,23 +433,24 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                 onClick={handleMainStageClick}
                 className="flex-grow flex items-center justify-center p-4 sm:p-8 overflow-y-auto cursor-pointer"
             >
-                <div className="text-center w-full max-w-4xl mx-auto my-auto px-2">
+                <div className="w-full max-w-4xl mx-auto my-auto px-2 sm:px-4 text-justify">
                     {(isLoading && !displayedText) ? (
-                        <div className="flex flex-col gap-4 items-center">
+                        <div className="flex flex-col gap-4 items-center text-center">
                             <SpinnerIcon className="w-12 h-12 text-primary animate-spin"/>
                             <p className="text-lg font-medium text-text-muted">جاري تحميل النص الصوتي...</p>
                         </div>
                     ) : (
                         <div className="leading-relaxed sm:leading-loose">
                             <p 
-                                className={`select-none transition-all duration-300 ${quranTextClass}`} 
+                                className={`select-none transition-all duration-300 text-justify ${quranTextClass}`} 
                                 dir={displayEditionDetails?.direction || 'rtl'}
+                                style={{ textAlign: 'justify', textJustify: 'inter-word' }}
                             >
                                 {canHighlight ? (
                                     displayedText.trim().split(/\s+/).map((word, index) => (
                                         <span 
                                             key={index} 
-                                            className={`transition-colors duration-150 inline-block mx-0.5 ${
+                                            className={`transition-colors duration-150 inline-block ${
                                                 index === currentWordIndex 
                                                     ? 'text-primary font-extrabold scale-105 transform drop-shadow-sm' 
                                                     : 'text-text-primary'

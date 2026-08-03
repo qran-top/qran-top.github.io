@@ -37,7 +37,7 @@ const SavedItemCard: React.FC<SavedItemCardProps> = ({ item, onDelete, onUpdateN
                 <div className="flex-grow">
                     {item.type === 'ayah' && (
                         <a href={`#/surah/${item.surah}?ayah=${item.ayah}`} onClick={handleClick} className="block hover:underline">
-                            <p className="font-quran text-lg text-text-primary">{item.text}</p>
+                            <p className="font-quran text-lg text-text-primary text-justify" style={{ textAlign: 'justify', textJustify: 'inter-word' }}>{item.text}</p>
                             <p className="text-sm font-bold text-primary-text mt-1 font-quran-title">سورة {item.surah} : الآية {item.ayah}</p>
                         </a>
                     )}

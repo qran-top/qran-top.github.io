@@ -211,7 +211,8 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
             <p
                 dir="rtl"
                 aria-label={`نص الآية ${displayAyah.numberInSurah} من سورة ${displayAyah.surah?.name}`}
-                className={`${quranTextClass} text-text-primary text-right`}
+                className={`${quranTextClass} text-text-primary text-justify`}
+                style={{ textAlign: 'justify', textJustify: 'inter-word' }}
             >
                {renderAyahWithHighlight()}
             </p>

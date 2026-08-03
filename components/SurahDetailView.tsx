@@ -659,7 +659,7 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
                                     بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ
                                 </div>
                             )}
-                            <div dir="rtl" className={`text-text-primary ${quranTextClass} text-right`}>
+                            <div dir="rtl" className={`text-text-primary ${quranTextClass} text-justify`} style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
                                 <AyahRenderer 
                                     ayahsToRender={surahSegment.ayahs} 
                                     surah={surahSegment} 
