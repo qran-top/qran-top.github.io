@@ -234,35 +234,30 @@ const Header: React.FC<HeaderProps> = ({
             isSearchVisible ? 'translate-y-0' : '-translate-y-full md:translate-y-0'
         }`}>
             <div className="w-full max-w-7xl mx-auto px-4">
-                {/* Row 1: Brand, Title, and Actions */}
+                {/* Row 1: Menu & Actions (Right), Center Search, and Brand Logo (Left) */}
                 <div className="flex items-center justify-between h-14 gap-2">
-                    {/* Right Group: Menu and Theme */}
-                    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                    {/* Right Group: Menu & Action Buttons */}
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                        {/* Menu Drawer Button */}
                         <button
                             onClick={() => setIsSidePanelOpen(true)}
-                            className="p-2 text-text-muted rounded-full hover:bg-surface-hover transition-colors"
+                            className="w-9 h-9 flex items-center justify-center text-text-muted hover:text-text-primary rounded-full bg-surface-subtle hover:bg-surface-hover transition-colors border border-border-default/60 shadow-xs active:scale-95"
                             aria-label="فتح القائمة"
+                            title="القائمة الرئيسية"
                         >
-                            <MenuIcon className="w-6 h-6" />
+                            <MenuIcon className="w-5 h-5" />
                         </button>
-                        <ThemeToggleButton />
-                    </div>
 
-                    {/* Center Group: Dynamic Page Title & Desktop Search */}
-                    <div className="flex-grow flex items-center justify-center min-w-0 px-4">
-                        <div className="hidden lg:block w-full max-w-md">
-                            <SearchForm onSearch={onSearch} disabled={searchDisabled} initialQuery={searchQuery} />
-                        </div>
-                    </div>
-                    
-                    {/* Left Group: Action buttons and Logo */}
-                    <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+                        {/* Theme Toggle Button */}
+                        <ThemeToggleButton />
+
+                        {/* Mode Switcher Button */}
                         {isRelevantPageForToggle && (
                             <button 
                                 onClick={handleStyleToggle}
                                 disabled={fontStyle !== 'uthmani' && isUthmaniLoading}
-                                className="flex items-center gap-1 px-2.5 py-1 text-xs md:px-3 md:py-1.5 font-semibold bg-surface-subtle text-text-primary hover:text-primary rounded-lg hover:bg-surface-hover transition-all border border-border-default disabled:opacity-50 shadow-sm"
-                                title="التبديل بين أوضاع العرض"
+                                className="h-9 px-2.5 sm:px-3 flex items-center gap-1.5 text-xs font-semibold bg-surface-subtle text-text-primary hover:text-primary rounded-full hover:bg-surface-hover transition-all border border-border-default disabled:opacity-50 shadow-xs active:scale-95"
+                                title="التبديل بين أوضاع العرض (عثماني / إملائي)"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-primary">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
@@ -271,29 +266,39 @@ const Header: React.FC<HeaderProps> = ({
                             </button>
                         )}
 
+                        {/* Bookmark / Reading History Button */}
                         <a
                             href="#/history"
-                            className="p-2 rounded-full transition-all border border-border-default text-text-primary hover:text-primary hover:bg-surface-hover bg-surface-subtle shadow-sm flex items-center justify-center cursor-pointer"
+                            className="w-9 h-9 rounded-full transition-all border border-border-default text-text-primary hover:text-primary hover:bg-surface-hover bg-surface-subtle shadow-xs flex items-center justify-center cursor-pointer active:scale-95"
                             title="سجل القراءة ومواضع التوقف"
                             aria-label="سجل القراءة"
                         >
                             <BookmarkIcon className="w-4 h-4 text-primary" />
                         </a>
 
+                        {/* Audio Play Button */}
                         {isSurahOrPage && (
                             <button
                                 onClick={handlePlaySurah}
                                 disabled={isPlaybackLoading}
-                                className="hidden sm:flex p-2 bg-primary text-white rounded-full shadow-md hover:bg-primary-hover transition-colors disabled:opacity-60"
+                                className="hidden sm:flex w-9 h-9 bg-primary text-white rounded-full shadow-xs hover:bg-primary-hover transition-all items-center justify-center disabled:opacity-60 active:scale-95"
                                 aria-label="استماع"
-                                title={!isOnline ? "غير متاح بدون إنترنت" : "استماع"}
+                                title={!isOnline ? "غير متاح بدون إنترنت" : "استماع للآيات"}
                             >
-                                {isPlaybackLoading ? <SpinnerIcon className="w-4 h-4"/> : <PlayIcon className="w-4 h-4"/>}
+                                {isPlaybackLoading ? <SpinnerIcon className="w-4 h-4 animate-spin"/> : <PlayIcon className="w-4 h-4"/>}
                             </button>
                         )}
-                        
-                        <div className="w-px h-6 bg-border-default mx-1"></div>
+                    </div>
 
+                    {/* Center Group: Desktop Search */}
+                    <div className="flex-grow flex items-center justify-center min-w-0 px-2 sm:px-4">
+                        <div className="hidden lg:block w-full max-w-md">
+                            <SearchForm onSearch={onSearch} disabled={searchDisabled} initialQuery={searchQuery} />
+                        </div>
+                    </div>
+                    
+                    {/* Left Group: Brand Logo */}
+                    <div className="flex items-center flex-shrink-0">
                         <Logo dataSourceStatus={dataSourceStatus} isHomePage={isHomePage} />
                     </div>
                 </div>
