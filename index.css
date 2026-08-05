@@ -138,22 +138,32 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* External Font Declarations with CDN Fallbacks */
+@font-face {
+  font-family: 'UthmanicHafs';
+  src: url('https://cdn.jsdelivr.net/gh/Quran-com/quran.com-frontend-next@master/public/fonts/UthmanicHafs1Ver18.woff2') format('woff2'),
+       url('https://raw.githubusercontent.com/Quran-com/quran.com-frontend-next/master/public/fonts/UthmanicHafs1Ver18.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Base font styles */
 .font-quran {
-  font-family: 'Tajawal', sans-serif;
+  font-family: 'Tajawal', system-ui, -apple-system, sans-serif;
   font-weight: 700;
 }
 .font-bismillah {
-  font-family: 'Amiri Quran', serif;
+  font-family: 'UthmanicHafs', 'Amiri Quran', serif;
 }
 .font-quran-title {
-  font-family: 'Amiri Quran', serif;
+  font-family: 'UthmanicHafs', 'Amiri Quran', serif;
   font-weight: 600;
 }
 
 /* Uthmani font size classes */
 .uthmani-font { 
-  font-family: 'Amiri Quran', serif; 
+  font-family: 'UthmanicHafs', 'Amiri Quran', 'Scheherazade New', serif; 
   font-feature-settings: "kern", "liga", "clig", "calt";
   font-variant-ligatures: common-ligatures;
   /* Critical for correct mark positioning on mobile browsers */

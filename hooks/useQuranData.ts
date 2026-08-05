@@ -19,7 +19,16 @@ export const useQuranData = () => {
         const { identifier } = edition;
         return `https://api.alquran.cloud/v1/quran/${identifier}`;
     }, []);
-    
+
+    const getEditionFallbackUrls = useCallback((edition: QuranEdition): string[] => {
+        const { identifier } = edition;
+        return [
+            `https://api.alquran.cloud/v1/quran/${identifier}`,
+            `https://cdn.islamic.network/quran/api/v1/quran/${identifier}`,
+            `https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/editions/ar-${identifier}.json`
+        ];
+    }, []);
+
     const processApiData = (apiData: any): SurahData[] => {
         if (apiData.code === 200 && apiData.data && apiData.data.surahs) {
             const surahs: SurahData[] = apiData.data.surahs;
@@ -74,21 +83,34 @@ export const useQuranData = () => {
             return;
         }
         
-        const url = getEditionUrl(editionToFetch);
+        const urls = getEditionFallbackUrls(editionToFetch);
+        let successSurahs: SurahData[] | null = null;
+        let lastError: any = null;
 
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
-            const apiData = await response.json();
-            const surahs = processApiData(apiData);
-            setAllQuranData(prev => ({ ...prev, [editionIdentifier]: surahs }));
-        } catch (err) {
-            console.error(`Failed to fetch edition ${editionIdentifier}:`, err);
-            setError(`فشل تحميل بيانات المصحف الأساسية. قد تكون هناك مشكلة في الاتصال بالإنترنت.`);
-        } finally {
-            setLoadingEditions(prev => prev.filter(id => id !== editionIdentifier));
+        for (const url of urls) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Network response error ${response.status}`);
+                const apiData = await response.json();
+                successSurahs = processApiData(apiData);
+                if (successSurahs && successSurahs.length > 0) {
+                    break;
+                }
+            } catch (err) {
+                console.warn(`Failed fetching edition from mirror: ${url}`, err);
+                lastError = err;
+            }
         }
-    }, [availableEditions, getEditionUrl, allQuranData, loadingEditions]);
+
+        if (successSurahs) {
+            setAllQuranData(prev => ({ ...prev, [editionIdentifier]: successSurahs! }));
+        } else {
+            console.error(`Failed all mirrors for edition ${editionIdentifier}:`, lastError);
+            setError(`فشل تحميل بيانات المصحف الأساسية. تمت محاولة الاتصال بجميع الخوادم البديلة ولم تنجح. يُرجى التثبت من الاتصال بالشبكة.`);
+        }
+
+        setLoadingEditions(prev => prev.filter(id => id !== editionIdentifier));
+    }, [availableEditions, getEditionFallbackUrls, allQuranData, loadingEditions]);
 
     const fetchCustomEditionDataRef = useRef(fetchCustomEditionData);
     useEffect(() => {
