@@ -1,7 +1,7 @@
 // service-worker.js
 
-const STATIC_CACHE_NAME = 'qran-top-static-v25'; // Version bump to force update
-const DATA_CACHE_NAME = 'qran-top-data-v17';
+const STATIC_CACHE_NAME = 'qran-top-static-v26'; // Version bump to force update
+const DATA_CACHE_NAME = 'qran-top-data-v18';
 
 // Core data files that are essential for the app to work offline.
 const CORE_DATA_URLS = [
@@ -105,8 +105,13 @@ self.addEventListener('fetch', event => {
             });
         })
         .catch(() => {
-            // If network fails (offline), fall back to cache
-            return caches.match(request, { ignoreSearch: true });
+            // If network fails (offline), fall back to cache, then fallback to index.html
+            return caches.match(request, { ignoreSearch: true }).then(cached => {
+                if (cached) return cached;
+                return caches.match('./index.html').then(htmlCached => {
+                    return htmlCached || caches.match('./');
+                });
+            });
         })
     );
     return;

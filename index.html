@@ -6,40 +6,15 @@
         if (msg === 'Script error.') return true;
       };
       
-      // Force refresh on new version to clear WebViews and PWA caching of old navigation code
+      // Safe version check for PWA updates
       (function() {
         const APP_BUILD_VER = '1.0.10';
         try {
           const storedVer = localStorage.getItem('qran_app_build_version');
-          if (storedVer !== APP_BUILD_VER) {
+          if (!storedVer) {
             localStorage.setItem('qran_app_build_version', APP_BUILD_VER);
-            
-            // Unregister Service Workers
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(function(regs) {
-                for (var i = 0; i < regs.length; i++) {
-                  regs[i].unregister();
-                }
-              });
-            }
-            
-            // Delete Cache API caches
-            if ('caches' in window) {
-              caches.keys().then(function(names) {
-                for (var i = 0; i < names.length; i++) {
-                  caches.delete(names[i]);
-                }
-              });
-            }
-            
-            // Force clean reload after caches are cleared
-            setTimeout(function() {
-              window.location.reload(true);
-            }, 300);
           }
-        } catch (e) {
-          console.error('Cache buster error:', e);
-        }
+        } catch (e) {}
       })();
     </script>
     <meta charset="UTF-8" />
