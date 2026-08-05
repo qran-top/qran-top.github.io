@@ -382,48 +382,91 @@ html.dark .animate-highlight-pulse {
   }
 }
 
-/* --- Static Loader Styles --- */
+/* --- Static Loader Styles (shown before React mounts) --- */
 .static-loader {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
   background-color: var(--color-background);
+  color: var(--color-text-primary);
+  padding: 1.5rem;
   opacity: 1;
-  transition: opacity 0.5s ease-out;
-}
-.loader-symbol-container {
-  position: relative;
-  width: 8rem;
-  height: 8rem;
-}
-.loader-symbol-bg, .loader-symbol-fg {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-}
-.loader-symbol-bg {
-  color: #e5e7eb;
-}
-.dark .loader-symbol-bg {
-  color: #374151;
-}
-.loader-symbol-fg {
-  background: linear-gradient(-45deg, #1e90ff, #9400d3, #ff1493, #ffd700);
-  background-size: 400% 400%;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='50' font-size='80' text-anchor='middle' dominant-baseline='central' fill='black'%3E%DB%9E%3C/text%3E%3C/svg%3E") no-repeat center / contain;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='50' font-size='80' text-anchor='middle' dominant-baseline='central' fill='black'%3E%DB%9E%3C/text%3E%3C/svg%3E") no-repeat center / contain;
-  animation: shine-effect 5s ease infinite, fill-effect 1.8s ease-in-out forwards;
+  transition: opacity 0.3s ease-out;
+  user-select: none;
+  font-family: 'Tajawal', system-ui, -apple-system, sans-serif;
 }
 
-@keyframes fill-effect {
-  from { clip-path: inset(100% 0 0 0); }
-  to { clip-path: inset(0% 0 0 0); }
+.loader-star-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 6rem;
+  height: 6rem;
+  margin-bottom: 1.5rem;
 }
-.loader-text {
-  font-size: 1.125rem;
+
+.loader-star-aura {
+  position: absolute;
+  inset: 0.5rem;
+  border-radius: 1rem;
+  background-color: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  transform: rotate(45deg);
+  animation: spinSlow 12s linear infinite;
+}
+
+.loader-star-aura-inner {
+  position: absolute;
+  inset: 0.5rem;
+  border-radius: 1rem;
+  background-color: rgba(34, 197, 94, 0.05);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  transform: rotate(-12deg);
+}
+
+.loader-star-char {
+  position: relative;
+  font-size: 3.75rem;
+  color: var(--color-primary);
+  font-family: 'Scheherazade New', 'Amiri Quran', serif;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.loader-brand-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.loader-brand-title span {
+  color: var(--color-primary);
+}
+
+.loader-brand-sub {
+  font-size: 0.85rem;
   color: var(--color-text-muted);
-  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.loader-status-text {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  padding: 0.5rem 1rem;
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.75rem;
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* This file is intentionally blank. */

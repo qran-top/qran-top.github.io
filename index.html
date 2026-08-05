@@ -93,17 +93,16 @@
   </head>
   <body>
     <div id="root">
-      <!-- Static loader to prevent blank screen. React will replace this. -->
+      <!-- Static loader to prevent blank screen before React mounts -->
       <div class="static-loader">
-        <div class="loader-symbol-container">
-          <div class="loader-symbol-bg">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="currentColor"><text x="50" y="50" font-size="80" text-anchor="middle" dominant-baseline="central">۞</text></svg>
-          </div>
-          <div class="loader-symbol-fg"></div>
+        <div class="loader-star-box">
+          <div class="loader-star-aura"></div>
+          <div class="loader-star-aura-inner"></div>
+          <span class="loader-star-char">۞</span>
         </div>
-        <p class="loader-text">
-          جاري تحميل بيانات المصحف الشريف...
-        </p>
+        <div class="loader-brand-title">QRAN<span>.TOP</span></div>
+        <div class="loader-brand-sub">مستكشف القرآن الكريم</div>
+        <div class="loader-status-text">جاري تحضير المصحف الشريف...</div>
       </div>
     </div>
     
