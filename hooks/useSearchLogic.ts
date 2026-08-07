@@ -200,14 +200,20 @@ export const useSearchLogic = (
         }
         
         let filtered = baseResults;
-        if (activePhraseFilter !== 'all') {
-            if (isRootSearch) {
-                filtered = baseResults.filter(ayah => {
-                    const ayahWords = getNormalizedText(ayah).split(' ');
-                    return ayahWords.includes(activePhraseFilter);
-                });
-            } else {
-                filtered = baseResults.filter(ayah => getNormalizedText(ayah).includes(activePhraseFilter));
+        if (activePhraseFilter !== 'all' && activePhraseFilter.trim() !== '') {
+            const filters = activePhraseFilter.split(',').map(f => f.trim()).filter(Boolean);
+            if (filters.length > 0) {
+                if (isRootSearch) {
+                    filtered = baseResults.filter(ayah => {
+                        const ayahWords = getNormalizedText(ayah).split(/\s+/);
+                        return filters.some(f => ayahWords.includes(f));
+                    });
+                } else {
+                    filtered = baseResults.filter(ayah => {
+                        const ayahNorm = getNormalizedText(ayah);
+                        return filters.some(f => ayahNorm.includes(f));
+                    });
+                }
             }
         }
 

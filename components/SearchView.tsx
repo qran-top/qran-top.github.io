@@ -140,15 +140,36 @@ export const SearchView: React.FC<SearchViewProps> = ({
     if (queryToSave) onSaveSearch({ type: 'search', id: queryToSave, query: queryToSave, createdAt: Date.now() });
   };
   
+  const activeFiltersList = useMemo(() => {
+    if (activePhraseFilter === 'all' || !activePhraseFilter.trim()) return [];
+    return activePhraseFilter.split(',').map(s => s.trim()).filter(Boolean);
+  }, [activePhraseFilter]);
+
+  const handleToggleWordFilter = (word: string, normalized: string) => {
+    const exists = activeFiltersList.includes(normalized) || activeFiltersList.includes(word);
+    let nextFilters: string[];
+    if (exists) {
+      nextFilters = activeFiltersList.filter(f => f !== normalized && f !== word);
+    } else {
+      nextFilters = [...activeFiltersList, normalized];
+    }
+
+    if (nextFilters.length === 0) {
+      setActivePhraseFilter('all');
+    } else {
+      setActivePhraseFilter(nextFilters.join(','));
+    }
+  };
+
   const highlightedWordOccurrences = useMemo(() => {
-    if (displayedResults.length === 0 || queryWords.length === 0 || searchType !== 'text') return [];
+    if (results.length === 0 || queryWords.length === 0 || searchType !== 'text') return [];
 
     const isImlaei = fontStyle === 'imlai_1' || fontStyle === 'imlai_2';
-    const wordMap = new Map<string, { displayWord: string; count: number; order: number }>();
+    const wordMap = new Map<string, { displayWord: string; normalized: string; count: number; order: number }>();
     const appearanceOrder: string[] = [];
     let counter = 0;
 
-    displayedResults.forEach(resultAyah => {
+    results.forEach(resultAyah => {
         const displaySurah = displayEditionData.find(s => s.number === resultAyah.surah?.number);
         const displayAyah = displaySurah?.ayahs.find(a => a.numberInSurah === resultAyah.numberInSurah);
         let textToRender = displayAyah?.text || resultAyah.text || '';
@@ -167,7 +188,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
             if (isMatch) {
                 const key = normalizedWord;
                 if (!wordMap.has(key)) {
-                    wordMap.set(key, { displayWord: word, count: 1, order: counter++ });
+                    wordMap.set(key, { displayWord: word, normalized: key, count: 1, order: counter++ });
                     appearanceOrder.push(key);
                 } else {
                     const item = wordMap.get(key)!;
@@ -181,10 +202,11 @@ export const SearchView: React.FC<SearchViewProps> = ({
         const item = wordMap.get(key)!;
         return {
             word: item.displayWord,
+            normalized: item.normalized,
             count: item.count
         };
     });
-  }, [displayedResults, displayEditionData, queryWords, searchType, fontStyle]);
+  }, [results, displayEditionData, queryWords, searchType, fontStyle]);
 
   const handleCopyAll = () => {
     const textToCopy = formatResultsForExport(displayEditionData);
@@ -311,33 +333,55 @@ export const SearchView: React.FC<SearchViewProps> = ({
             displayedResults={displayedResults}
         />
         
-        {displayedResults.length > 0 && (
+        {results.length > 0 && (
           <>
             {highlightedWordOccurrences.length > 0 && (
               <div className="my-4 p-3.5 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-xl transition-all shadow-2xs">
                 <div className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
                     <span className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">
-                      الكلمات المحددة وعدد تكرارها في النتائج ({highlightedWordOccurrences.length} كلمات):
+                      الكلمات المحددة وعدد تكرارها ({highlightedWordOccurrences.length} كلمات):
+                    </span>
+                    <span className="text-[11px] text-amber-800/80 dark:text-amber-300/80 font-medium">
+                      (انقر على أي كلمة لتصفية النتائج بها)
                     </span>
                   </div>
-                  <span className="text-[11px] text-amber-800/80 dark:text-amber-300/80 font-medium">
-                    انقر على زر النسخ لتغيير نمط النسخ (1/3 ، 2/3 ، 3/3)
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
-                  {highlightedWordOccurrences.map(({ word, count }) => (
-                    <span 
-                      key={word}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-950 dark:text-amber-100 border border-amber-300/70 dark:border-amber-700/60 shadow-2xs hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
+                  {activePhraseFilter !== 'all' && (
+                    <button 
+                      onClick={() => setActivePhraseFilter('all')}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-500/25 hover:bg-amber-500/35 text-amber-950 dark:text-amber-100 border border-amber-400/50 transition-colors flex items-center gap-1 cursor-pointer"
+                      title="عرض جميع النتائج بدون تصفية"
                     >
-                      <span>{word}</span>
-                      <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-900 dark:text-amber-200 font-bold font-mono text-[11px]">
-                        {count} {count === 1 ? 'مرة' : count === 2 ? 'مرتان' : count <= 10 ? 'مرات' : 'مرة'}
-                      </span>
-                    </span>
-                  ))}
+                      <span>إلغاء التصفية (عرض الكل)</span>
+                      <span className="font-bold">✕</span>
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto pr-1">
+                  {highlightedWordOccurrences.map(({ word, normalized, count }) => {
+                    const isActive = activeFiltersList.includes(normalized) || activeFiltersList.includes(word);
+                    return (
+                      <button 
+                        key={normalized}
+                        onClick={() => handleToggleWordFilter(word, normalized)}
+                        title={isActive ? "انقر لإلغاء التصفية بهذه الكلمة" : `انقر لتصفية النتائج بالكلمة "${word}"`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                          isActive 
+                            ? 'bg-amber-600 text-white font-bold ring-2 ring-amber-500 shadow-md scale-105' 
+                            : 'bg-amber-100 dark:bg-amber-900/40 text-amber-950 dark:text-amber-100 border border-amber-300/70 dark:border-amber-700/60 shadow-2xs hover:bg-amber-200 dark:hover:bg-amber-900/60'
+                        }`}
+                      >
+                        {isActive && <span className="font-bold text-xs">✓</span>}
+                        <span>{word}</span>
+                        <span className={`px-1.5 py-0.5 rounded-md font-bold font-mono text-[11px] ${
+                          isActive ? 'bg-white/20 text-white' : 'bg-amber-500/20 text-amber-900 dark:text-amber-200'
+                        }`}>
+                          {count} {count === 1 ? 'مرة' : count === 2 ? 'مرتان' : count <= 10 ? 'مرات' : 'مرة'}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
