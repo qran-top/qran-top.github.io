@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import type { Ayah, SurahData, QuranEdition, FontSize, FontStyleType } from '../types';
-import { SparklesIcon } from './icons';
+import { SparklesIcon, BookmarkIcon, CopyIcon, CheckIcon } from './icons';
 import { normalizeArabicText } from '../utils/text';
 import { getQuranTextStyle } from '../utils/font';
 
@@ -20,7 +20,9 @@ interface SearchResultItemProps {
   resultIndex: number;
   simpleAyahText: string;
   onUthmaniWordClick: (event: React.MouseEvent<HTMLButtonElement>, resultIndex: number, simpleAyahText: string) => void;
-  onOpenPopover: (ayah: Ayah, triggerElement: HTMLElement) => void;
+  onSaveAyah?: (ayah: Ayah) => void;
+  onCopyAyah?: (ayah: Ayah) => void;
+  copiedAyah?: number | null;
 }
 
 const SURAH_MUQATTAAT_MAP: Record<number, string> = {
@@ -60,10 +62,10 @@ const getSurahMuqattaat = (surahNumber?: number): string | null => {
     return SURAH_MUQATTAAT_MAP[surahNumber] || null;
 };
 
-const SearchResultItem: React.FC<SearchResultItemProps> = ({ 
+    const SearchResultItem: React.FC<SearchResultItemProps> = ({ 
     ayah, queryWords, onNewSearch, displayEdition, displayEditionData, 
     fontSize, fontStyle, searchType, isCurrentlyPlaying, itemRef, pulsingWordIndex,
-    resultIndex, simpleAyahText, onUthmaniWordClick, onOpenPopover
+    resultIndex, simpleAyahText, onUthmaniWordClick, onSaveAyah, onCopyAyah, copiedAyah
 }) => {
 
     const displayAyah = useMemo(() => {
@@ -198,14 +200,32 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
                             </span>
                         );
                     })()}
-                    <button
-                        onClick={(e) => onOpenPopover(displayAyah, e.currentTarget)}
-                        className="p-2 -m-2 rounded-full text-text-subtle hover:text-primary hover:bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        aria-label="إجراءات الآية"
-                        title="إجراءات الآية"
-                    >
-                        <SparklesIcon className="w-5 h-5" />
-                    </button>
+                    {onCopyAyah && (
+                        <button
+                            onClick={() => onCopyAyah(displayAyah)}
+                            className="p-1.5 rounded-lg text-text-secondary hover:text-primary hover:bg-surface-hover border border-border-default transition-all flex items-center gap-1 text-xs font-semibold"
+                            aria-label="نسخ الآية"
+                            title="نسخ الآية مع المرجع"
+                        >
+                            {copiedAyah === displayAyah.number ? (
+                                <CheckIcon className="w-4 h-4 text-green-500" />
+                            ) : (
+                                <CopyIcon className="w-4 h-4 text-primary" />
+                            )}
+                            <span className="hidden sm:inline">نسخ</span>
+                        </button>
+                    )}
+                    {onSaveAyah && (
+                        <button
+                            onClick={() => onSaveAyah(displayAyah)}
+                            className="p-1.5 rounded-lg text-text-secondary hover:text-primary hover:bg-surface-hover border border-border-default transition-all flex items-center gap-1 text-xs font-semibold"
+                            aria-label="حفظ الآية في دفتر التدبر"
+                            title="حفظ الآية في دفتر التدبر"
+                        >
+                            <BookmarkIcon className="w-4 h-4 text-primary" />
+                            <span className="hidden sm:inline">حفظ</span>
+                        </button>
+                    )}
                 </div>
             </div>
             <p
@@ -220,4 +240,4 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
     );
 };
 
-export default SearchResultItem;
+export default React.memo(SearchResultItem);

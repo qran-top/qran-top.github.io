@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useDeferredValue, useCallback } from 'react';
 import type { Ayah, SurahData, SavedAyahItem, SavedSearchItem } from '../types';
 import { SearchIcon, ClearIcon, DocumentDuplicateIcon } from './icons';
 import { normalizeArabicText, formatSurahNameForDisplay } from '../utils/text';
@@ -162,15 +162,17 @@ export const SearchView: React.FC<SearchViewProps> = ({
     }
   };
 
+  const deferredResults = useDeferredValue(results);
+
   const highlightedWordOccurrences = useMemo(() => {
-    if (results.length === 0 || queryWords.length === 0 || searchType !== 'text') return [];
+    if (deferredResults.length === 0 || queryWords.length === 0 || searchType !== 'text') return [];
 
     const isImlaei = fontStyle === 'imlai_1' || fontStyle === 'imlai_2';
     const wordMap = new Map<string, { displayWord: string; normalized: string; count: number; order: number }>();
     const appearanceOrder: string[] = [];
     let counter = 0;
 
-    results.forEach(resultAyah => {
+    deferredResults.forEach(resultAyah => {
         const displaySurah = displayEditionData.find(s => s.number === resultAyah.surah?.number);
         const displayAyah = displaySurah?.ayahs.find(a => a.numberInSurah === resultAyah.numberInSurah);
         let textToRender = displayAyah?.text || resultAyah.text || '';
@@ -208,7 +210,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
             order: item.order
         };
     });
-  }, [results, displayEditionData, queryWords, searchType, fontStyle]);
+  }, [deferredResults, displayEditionData, queryWords, searchType, fontStyle]);
 
   const sortedHighlightedWords = useMemo(() => {
     if (highlightedWordOccurrences.length === 0) return [];
@@ -335,11 +337,16 @@ export const SearchView: React.FC<SearchViewProps> = ({
   };
 
   // --- Ayah Action Handlers ---
-  const handleSaveClick = (ayah: Ayah) => {
+  const handleUthmaniWordClick = useCallback((e: React.MouseEvent<HTMLButtonElement>, resultIndex: number, simpleAyahText: string) => {
+    setWordPopoverState(prev => prev?.resultIndex === resultIndex ? null : { resultIndex, simpleText: simpleAyahText, triggerElement: e.currentTarget });
+  }, []);
+
+  const handleSaveClick = useCallback((ayah: Ayah) => {
     onSaveAyah({ type: 'ayah', id: `${ayah.surah!.number}:${ayah.numberInSurah}`, surah: ayah.surah!.number, ayah: ayah.numberInSurah, text: ayah.text || '', createdAt: Date.now() });
     setActivePopover(null);
-  };
-  const handleCopyAyah = (ayah: Ayah) => {
+  }, [onSaveAyah]);
+
+  const handleCopyAyah = useCallback((ayah: Ayah) => {
     const isImlaei = fontStyle === 'imlai_1' || fontStyle === 'imlai_2';
     let ayahText = ayah.text || '';
 
@@ -354,7 +361,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
         setTimeout(() => setCopiedAyah(null), 2000);
         setActivePopover(null);
     });
-  };
+  }, [fontStyle]);
   const handleSearchByAyahText = (ayah: Ayah) => {
     const simpleSurah = simpleCleanData.find(s => s.number === ayah.surah!.number);
     const simpleAyah = simpleSurah?.ayahs.find(a => a.numberInSurah === ayah.numberInSurah);
@@ -539,8 +546,10 @@ export const SearchView: React.FC<SearchViewProps> = ({
                                 fontSize={fontSize} fontStyle={fontStyle} searchType={searchType} isCurrentlyPlaying={ayah.number === currentlyPlayingAyahGlobalNumber}
                                 pulsingWordIndex={pulsingWord?.itemIndex === index ? pulsingWord.wordIndex : -1} resultIndex={index}
                                 simpleAyahText={simpleAyah?.text || ''}
-                                onUthmaniWordClick={(e, idx, text) => { if (wordPopoverState?.resultIndex === idx) setWordPopoverState(null); else setWordPopoverState({ resultIndex: idx, simpleText: text, triggerElement: e.currentTarget }); }}
-                                onOpenPopover={(ayah, triggerElement) => setActivePopover({ ayah, triggerElement })}
+                                onUthmaniWordClick={handleUthmaniWordClick}
+                                onSaveAyah={handleSaveClick}
+                                onCopyAyah={handleCopyAyah}
+                                copiedAyah={copiedAyah}
                             />
                        );
                     })}

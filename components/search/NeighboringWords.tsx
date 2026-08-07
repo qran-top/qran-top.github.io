@@ -36,4 +36,4 @@ const NeighboringWords: React.FC<NeighboringWordsProps> = ({ neighboringWords, v
     );
 };
 
-export default NeighboringWords;
+export default React.memo(NeighboringWords);

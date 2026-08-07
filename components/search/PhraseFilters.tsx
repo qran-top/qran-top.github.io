@@ -60,4 +60,4 @@ const PhraseFilters: React.FC<PhraseFiltersProps> = ({ phraseFilters, activePhra
     );
 };
 
-export default PhraseFilters;
+export default React.memo(PhraseFilters);

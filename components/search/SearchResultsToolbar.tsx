@@ -62,4 +62,4 @@ const SearchResultsToolbar: React.FC<SearchResultsToolbarProps> = ({
     );
 };
 
-export default SearchResultsToolbar;
+export default React.memo(SearchResultsToolbar);

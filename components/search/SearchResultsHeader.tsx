@@ -61,17 +61,6 @@ const SearchResultsHeader: React.FC<SearchResultsHeaderProps> = ({
     cachedAnalysisExists, onNewSearch, isRootSearch = false, onToggleRootSearch,
     displayedResults = []
 }) => {
-    const [jumpToValue, setJumpToValue] = useState('');
-    
-    const handleJump = () => {
-        const target = parseInt(jumpToValue, 10);
-        if (isNaN(target) || target < 1 || target > totalOccurrences) {
-            alert(`الرجاء إدخال رقم صحيح بين 1 و ${totalOccurrences}`);
-            return;
-        }
-        onJumpToOccurrence(target);
-    };
-
     const finalQueryForChecks = correctedQuery || query;
     const shouldShowAnalysisButton = finalQueryForChecks.trim().split(/\s+/).filter(Boolean).length === 1 && searchType === 'text';
 
@@ -185,13 +174,7 @@ const SearchResultsHeader: React.FC<SearchResultsHeaderProps> = ({
                     </div>
                 )}
             </div>
-            {searchType === 'text' && totalOccurrences > 1 && (
-                <div className="mt-3 pt-3 border-t border-border-default flex items-center gap-2 flex-wrap">
-                    <label htmlFor="jump-input" className="text-sm font-semibold text-text-muted">الانتقال إلى التكرار:</label>
-                    <input id="jump-input" type="number" value={jumpToValue} onChange={(e) => setJumpToValue(e.target.value)} min="1" max={totalOccurrences} className="w-24 p-1.5 border border-border-default rounded-md text-center bg-surface focus:outline-none focus:ring-2 focus:ring-primary" placeholder={`1 - ${totalOccurrences}`} />
-                    <button onClick={handleJump} className="px-4 py-1.5 bg-primary text-white text-sm font-semibold rounded-md hover:bg-primary-hover transition-colors">اذهب</button>
-                </div>
-            )}
+
             {cachedAnalysisExists && shouldShowAnalysisButton && (
                 <div className="mt-3 pt-3 border-t border-border-default">
                     <a href={`#/analysis/${encodeURIComponent(finalQueryForChecks)}`} onClick={(e) => { e.preventDefault(); window.location.hash = `#/analysis/${encodeURIComponent(finalQueryForChecks)}`; }} className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold rounded-md hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors">
@@ -204,4 +187,4 @@ const SearchResultsHeader: React.FC<SearchResultsHeaderProps> = ({
     );
 };
 
-export default SearchResultsHeader;
+export default React.memo(SearchResultsHeader);

@@ -1,5 +1,5 @@
 // FIX: Import useEffect from 'react' to resolve 'Cannot find name' error.
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useDeferredValue } from 'react';
 import type { Ayah } from '../types';
 import { normalizeArabicText, formatSurahNameForDisplay } from '../utils/text';
 import { safeLocalStorage } from '../utils/storage';
@@ -119,6 +119,7 @@ export const useSearchLogic = (
     const isSingleWordSearch = queryWords.length === 1;
 
     const activeResults = results;
+    const deferredResults = useDeferredValue(results);
 
     const phraseFilters = useMemo(() => {
         if (searchType === 'number') {
@@ -130,7 +131,7 @@ export const useSearchLogic = (
             const wordCounts: { phrase: string; count: number }[] = [];
             
             uniqueWords.forEach(word => {
-                const count = activeResults.filter(ayah => {
+                const count = deferredResults.filter(ayah => {
                     const ayahWords = getNormalizedText(ayah).split(' ');
                     return ayahWords.includes(word);
                 }).length;
@@ -147,7 +148,7 @@ export const useSearchLogic = (
             return [];
         }
         
-        const currentResults = activeResults;
+        const currentResults = deferredResults;
         const phrasesToConsider = new Set<string>();
         currentResults.forEach(ayah => {
             const ayahWords = getNormalizedText(ayah).split(' ');
@@ -187,7 +188,7 @@ export const useSearchLogic = (
         const finalFilters = userPhraseObj ? [userPhraseObj, ...topPhrases] : topPhrases;
 
         return finalFilters.sort((a, b) => b.count - a.count || a.phrase.length - b.phrase.length);
-    }, [activeResults, queryWords, searchType, isRootSearch]);
+    }, [deferredResults, queryWords, searchType, isRootSearch]);
 
     const displayedResults = useMemo(() => {
         let baseResults = activeResults;
@@ -256,8 +257,8 @@ export const useSearchLogic = (
         if (searchType === 'number' || queryWords.length === 0) return 0;
         let count = 0;
         const nWords = queryWords.length;
-        for (let i = 0; i < activeResults.length; i++) {
-            const ayahText = getNormalizedText(activeResults[i]);
+        for (let i = 0; i < deferredResults.length; i++) {
+            const ayahText = getNormalizedText(deferredResults[i]);
             for (let w = 0; w < nWords; w++) {
                 const word = queryWords[w];
                 let idx = ayahText.indexOf(word);
@@ -268,14 +269,14 @@ export const useSearchLogic = (
             }
         }
         return count;
-    }, [activeResults, queryWords, searchType]);
+    }, [deferredResults, queryWords, searchType]);
 
     const exactOccurrences = useMemo(() => {
         if (searchType === 'number' || queryWords.length === 0) return 0;
         let count = 0;
         const wordSet = new Set(queryWords);
-        for (let i = 0; i < activeResults.length; i++) {
-            const ayahWords = getNormalizedText(activeResults[i]).split(' ');
+        for (let i = 0; i < deferredResults.length; i++) {
+            const ayahWords = getNormalizedText(deferredResults[i]).split(' ');
             for (let j = 0; j < ayahWords.length; j++) {
                 if (wordSet.has(ayahWords[j])) {
                     count++;
@@ -283,12 +284,12 @@ export const useSearchLogic = (
             }
         }
         return count;
-    }, [activeResults, queryWords, searchType]);
+    }, [deferredResults, queryWords, searchType]);
 
     const neighboringWords = useMemo(() => {
         if (searchType === 'number' || !isSingleWordSearch) return [];
-        return findNeighboringWords(activeResults, correctedQuery || query);
-    }, [activeResults, query, correctedQuery, searchType, isSingleWordSearch]);
+        return findNeighboringWords(deferredResults, correctedQuery || query);
+    }, [deferredResults, query, correctedQuery, searchType, isSingleWordSearch]);
     
     const handleShowMore = () => setVisibleSuggestionsCount(prev => prev + 7);
 
