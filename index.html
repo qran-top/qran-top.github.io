@@ -62,13 +62,13 @@
     <!-- Step 1: Immediately set theme class if needed to prevent FOUC. Must be first. -->
     <script>
       (function() {
-        const availableThemes = ['light', 'dark', 'dhuhr', 'duha', 'isha'];
+        const availableThemes = ['light', 'duha', 'dark', 'isha'];
         let storedTheme = null;
         try {
             storedTheme = localStorage.getItem('theme');
         } catch (e) {}
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        let themeToSet = 'light'; // New default light theme
+        let themeToSet = 'light'; // Default light theme
         
         if (storedTheme && availableThemes.includes(storedTheme)) {
             themeToSet = storedTheme;

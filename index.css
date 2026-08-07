@@ -18,101 +18,82 @@
   --color-border-subtle: var(--color-border-subtle);
 }
 
-/* --- THEME DEFINITIONS (5 THEMES) --- */
+/* --- THEME DEFINITIONS (4 ACADEMIC & EYE-FRIENDLY THEMES: 2 LIGHT, 2 DARK) --- */
 
-/* ☀️ Light - "Classic" (Original Light) */
+/* ☀️ Light 1: Classic Ivory (عاجي كلاسيكي) */
 :root, .theme-light {
-  --color-background: #ffffff;
-  --color-surface: #f8f9fa;
-  --color-surface-hover: #e9ecef;
-  --color-surface-active: #dee2e6;
-  --color-surface-subtle: #f1f3f5;
-  --color-text-primary: #212529;
-  --color-text-secondary: #495057;
-  --color-text-muted: #6c757d;
-  --color-text-subtle: #868e96;
-  --color-primary: #22c55e;
-  --color-primary-hover: #16a34a;
-  --color-primary-text: #15803d;
+  --color-background: #FAF8F5;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F3EFEA;
+  --color-surface-active: #EAE4DC;
+  --color-surface-subtle: #F7F4EF;
+  --color-text-primary: #1C2024;
+  --color-text-secondary: #4A525A;
+  --color-text-muted: #707A84;
+  --color-text-subtle: #8F98A1;
+  --color-primary: #16A34A;
+  --color-primary-hover: #15803D;
+  --color-primary-text: #15803D;
   --color-primary-text-strong: #166534;
-  --color-border-default: #dee2e6;
-  --color-border-subtle: #e9ecef;
+  --color-border-default: #E5E0D8;
+  --color-border-subtle: #EFEDE8;
 }
 
-/* 🌙 Dark - "Classic" (Original Dark) */
-.theme-dark {
-  --color-background: #121212;
-  --color-surface: #1e1e1e;
-  --color-surface-hover: #2c2c2c;
-  --color-surface-active: #383838;
-  --color-surface-subtle: #222222;
-  --color-text-primary: #e0e0e0;
-  --color-text-secondary: #bdbdbd;
-  --color-text-muted: #9e9e9e;
-  --color-text-subtle: #757575;
-  --color-primary: #22c55e;
-  --color-primary-hover: #16a34a;
-  --color-primary-text: #4ade80;
-  --color-primary-text-strong: #86efac;
-  --color-border-default: #363636;
-  --color-border-subtle: #2a2a2a;
-}
-
-/* ☀️ Dhuhr - "Bauhaus" */
-.theme-dhuhr {
-  --color-background: #ffffff;
-  --color-surface: #f8f9fa;
-  --color-surface-hover: #e9ecef;
-  --color-surface-active: #dee2e6;
-  --color-surface-subtle: #f1f3f5;
-  --color-text-primary: #000000;
-  --color-text-secondary: #212529;
-  --color-text-muted: #495057;
-  --color-text-subtle: #868e96;
-  --color-primary: #007bff;
-  --color-primary-hover: #0069d9;
-  --color-primary-text: #007bff;
-  --color-primary-text-strong: #0056b3;
-  --color-border-default: #dee2e6;
-  --color-border-subtle: #e9ecef;
-}
-
-/* 🌃 Isha - "Baroque" */
-.theme-isha {
-  --color-background: #000000;
-  --color-surface: #1a1a1a;
-  --color-surface-hover: #2c2c2c;
-  --color-surface-active: #383838;
-  --color-surface-subtle: #222222;
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #e0e0e0;
-  --color-text-muted: #bdbdbd;
-  --color-text-subtle: #9e9e9e;
-  --color-primary: #ffd700; /* Royal Gold */
-  --color-primary-hover: #e6c200;
-  --color-primary-text: #ffd700;
-  --color-primary-text-strong: #ffec80;
-  --color-border-default: #363636;
-  --color-border-subtle: #2a2a2a;
-}
-
-/* ✨ Duha - "Art Nouveau" (Light) */
+/* 📄 Light 2: Academic Paper (ورقي أكاديمي) */
 .theme-duha {
-  --color-background: #fdfaf6; /* Ivory */
-  --color-surface: #ffffff;
-  --color-surface-hover: #f7f2ec;
-  --color-surface-active: #f2eade;
-  --color-surface-subtle: #f9f5f0;
-  --color-text-primary: #556b2f; /* Dark Olive Green */
-  --color-text-secondary: #6B8E23;
-  --color-text-muted: #808000;
-  --color-text-subtle: #9ACD32;
-  --color-primary: #DAA520; /* Goldenrod */
-  --color-primary-hover: #B8860B;
-  --color-primary-text: #DAA520;
-  --color-primary-text-strong: #B8860B;
-  --color-border-default: #e5e0d7;
-  --color-border-subtle: #f0eae1;
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F1F5F9;
+  --color-surface-active: #E2E8F0;
+  --color-surface-subtle: #F8FAFC;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748B;
+  --color-text-subtle: #94A3B8;
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-text: #1D4ED8;
+  --color-primary-text-strong: #1E40AF;
+  --color-border-default: #E2E8F0;
+  --color-border-subtle: #F1F5F9;
+}
+
+/* 🌙 Dark 1: Midnight Slate Navy (كحلي هادئ) */
+.theme-dark {
+  --color-background: #0F172A;
+  --color-surface: #1E293B;
+  --color-surface-hover: #334155;
+  --color-surface-active: #475569;
+  --color-surface-subtle: #182232;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #94A3B8;
+  --color-text-subtle: #64748B;
+  --color-primary: #10B981;
+  --color-primary-hover: #059669;
+  --color-primary-text: #34D399;
+  --color-primary-text-strong: #6EE7B7;
+  --color-border-default: #334155;
+  --color-border-subtle: #1E293B;
+}
+
+/* 🌌 Dark 2: Dark Olive Obsidian (زيتي داكن) */
+.theme-isha {
+  --color-background: #121614;
+  --color-surface: #1C221F;
+  --color-surface-hover: #28322D;
+  --color-surface-active: #35423B;
+  --color-surface-subtle: #171D1A;
+  --color-text-primary: #E8EBE4;
+  --color-text-secondary: #B8C0B4;
+  --color-text-muted: #8A9586;
+  --color-text-subtle: #626D5F;
+  --color-primary: #D97706;
+  --color-primary-hover: #B45309;
+  --color-primary-text: #FBBF24;
+  --color-primary-text-strong: #FDE68A;
+  --color-border-default: #2A352F;
+  --color-border-subtle: #1F2823;
 }
 
 html, body {

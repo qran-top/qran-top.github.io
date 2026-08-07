@@ -24,17 +24,22 @@ export const useRandomPattern = () => {
     let opacity = 0.1;
 
     switch (theme) {
-      case 'dhuhr': 
-        color = '#adb5bd';
-        opacity = 0.2;
-        break;
       case 'duha':
-        color = '#bba564';
-        opacity = 0.2;
+        color = '#2563eb';
+        opacity = 0.08;
         break;
       case 'isha':
-        color = '#b09500';
+        color = '#d97706';
         opacity = 0.07;
+        break;
+      case 'dark':
+        color = '#10b981';
+        opacity = 0.08;
+        break;
+      case 'light':
+      default:
+        color = '#16a34a';
+        opacity = 0.08;
         break;
     }
     

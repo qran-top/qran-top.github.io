@@ -1,16 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { safeLocalStorage } from '../utils/storage';
 
-export type Theme = 'light' | 'dark' | 'dhuhr' | 'duha' | 'isha';
+export type Theme = 'light' | 'duha' | 'dark' | 'isha';
 
-const themes: Theme[] = ['light', 'dark', 'dhuhr', 'isha', 'duha'];
+const themes: Theme[] = ['light', 'duha', 'dark', 'isha'];
 
 const themeDetails: Record<Theme, { name: string; emoji: string; isDark: boolean; primaryColor: string }> = {
-  light: { name: 'الوضع النهاري', emoji: '☀️', isDark: false, primaryColor: '#22c55e' },
-  dark: { name: 'الوضع الليلي', emoji: '🌙', isDark: true, primaryColor: '#22c55e' },
-  dhuhr: { name: 'الظهر البسيط', emoji: '☀️', isDark: false, primaryColor: '#007bff' },
-  duha: { name: 'الضحى المشرق', emoji: '✨', isDark: false, primaryColor: '#DAA520' },
-  isha: { name: 'العشاء الفاخر', emoji: '🌃', isDark: true, primaryColor: '#ffd700' },
+  light: { name: 'عاجي كلاسيكي', emoji: '☀️', isDark: false, primaryColor: '#16a34a' },
+  duha: { name: 'ورقي أكاديمي', emoji: '📄', isDark: false, primaryColor: '#2563eb' },
+  dark: { name: 'كحلي هادئ', emoji: '🌙', isDark: true, primaryColor: '#10b981' },
+  isha: { name: 'زيتي داكن', emoji: '🌌', isDark: true, primaryColor: '#d97706' },
 };
 
 export const useTheme = () => {

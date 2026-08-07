@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { Ayah, SurahData, SavedAyahItem, SavedSearchItem } from '../types';
-import { SearchIcon, ClearIcon } from './icons';
+import { SearchIcon, ClearIcon, DocumentDuplicateIcon } from './icons';
 import { normalizeArabicText, formatSurahNameForDisplay } from '../utils/text';
 import { useSearchLogic } from '../hooks/useSearchLogic';
 import { useSettingsContext } from '../contexts/SettingsContext';
@@ -49,6 +49,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
   const [isHighlightedCopied, setIsHighlightedCopied] = useState(false);
   const [copyHighlightedMode, setCopyHighlightedMode] = useState<number>(0);
   const [copyHighlightedToast, setCopyHighlightedToast] = useState<string>('');
+  const [wordSortMode, setWordSortMode] = useState<'match' | 'frequency' | 'quran'>('match');
   
   // Consume Settings from Context
   const { displayEdition, fontStyle, selectedAudioEdition, setSelectedAudioEdition, activeEditions, fontSize } = useSettingsContext();
@@ -203,10 +204,73 @@ export const SearchView: React.FC<SearchViewProps> = ({
         return {
             word: item.displayWord,
             normalized: item.normalized,
-            count: item.count
+            count: item.count,
+            order: item.order
         };
     });
   }, [results, displayEditionData, queryWords, searchType, fontStyle]);
+
+  const sortedHighlightedWords = useMemo(() => {
+    if (highlightedWordOccurrences.length === 0) return [];
+
+    const fullQueryNorm = normalizeArabicText((correctedQuery || query).trim());
+    const targets = Array.from(new Set([fullQueryNorm, ...queryWords.map(q => normalizeArabicText(q))])).filter(Boolean);
+
+    const getTier = (item: { normalized: string; word: string }) => {
+      const norm = item.normalized;
+
+      // Tier 0: Exact match
+      for (const target of targets) {
+        if (norm === target) return 0;
+      }
+
+      // Tier 1: Direct prefix match (word starts with query, e.g. "المفلحون" for "الم")
+      for (const target of targets) {
+        if (norm.startsWith(target)) return 1;
+      }
+
+      // Tier 2: Match after single grammatical prefix (و, ف, ب, ك, ل) e.g. "والمفلحون", "فالمستقيم"
+      const singlePrefixes = ['و', 'ف', 'ب', 'ك', 'ل'];
+      for (const target of targets) {
+        if (singlePrefixes.some(p => norm.startsWith(p) && norm.slice(p.length).startsWith(target))) {
+          return 2;
+        }
+      }
+
+      // Tier 3: Match after compound grammatical prefix (وال, فال, بال, كال, لل, وبال, وفال) e.g. "والظالمين" for "ظالم"
+      const compoundPrefixes = ['وال', 'فال', 'بال', 'كال', 'لل', 'وبال', 'وفال', 'ولل'];
+      for (const target of targets) {
+        if (compoundPrefixes.some(cp => norm.startsWith(cp) && norm.slice(cp.length).startsWith(target))) {
+          return 3;
+        }
+      }
+
+      // Tier 4: Incidental internal substring match (e.g. "والظالمون" or "العالمون" containing "الم" inside "ظالم" or "عالم")
+      return 4;
+    };
+
+    const listWithTier = highlightedWordOccurrences.map(item => ({
+      ...item,
+      tier: getTier(item)
+    }));
+
+    if (wordSortMode === 'match') {
+      return listWithTier.sort((a, b) => {
+        if (a.tier !== b.tier) return a.tier - b.tier;
+        if (b.count !== a.count) return b.count - a.count;
+        return a.order - b.order;
+      });
+    } else if (wordSortMode === 'frequency') {
+      return listWithTier.sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        if (a.tier !== b.tier) return a.tier - b.tier;
+        return a.order - b.order;
+      });
+    } else {
+      // 'quran'
+      return listWithTier.sort((a, b) => a.order - b.order);
+    }
+  }, [highlightedWordOccurrences, wordSortMode, queryWords, query, correctedQuery]);
 
   const handleCopyAll = () => {
     const textToCopy = formatResultsForExport(displayEditionData);
@@ -217,33 +281,26 @@ export const SearchView: React.FC<SearchViewProps> = ({
   };
 
   const handleCopyHighlightedWords = () => {
-    if (highlightedWordOccurrences.length === 0) return;
+    if (sortedHighlightedWords.length === 0) return;
 
     let textToCopy = '';
     let toastMsg = '';
     let nextMode = 0;
 
+    const sortLabel = wordSortMode === 'match' ? 'الترتيب الذكي' : wordSortMode === 'frequency' ? 'الأكثر تكراراً' : 'ترتيب المصحف';
+
     if (copyHighlightedMode === 0) {
-        // Mode 0: Copy words only (without repetition count)
-        textToCopy = highlightedWordOccurrences.map(w => w.word).join('، ');
-        toastMsg = 'تم النسخ: الكلمات فقط (بدون تكرار)';
+        // Mode 0: Copy words only
+        textToCopy = sortedHighlightedWords.map(w => w.word).join('، ');
+        toastMsg = `تم النسخ: الكلمات فقط (${sortLabel})`;
         nextMode = 1;
-    } else if (copyHighlightedMode === 1) {
-        // Mode 1: Copy words with repetition count (in appearance order)
-        textToCopy = highlightedWordOccurrences.map(w => {
-            const timesStr = w.count === 1 ? 'مرة' : w.count === 2 ? 'مرتان' : w.count <= 10 ? 'مرات' : 'مرة';
-            return `${w.word} (${w.count} ${timesStr})`;
-        }).join('، ');
-        toastMsg = 'تم النسخ: الكلمات + عدد التكرار';
-        nextMode = 2;
     } else {
-        // Mode 2: Copy words sorted by highest count first, with repetition count
-        const sorted = [...highlightedWordOccurrences].sort((a, b) => b.count - a.count);
-        textToCopy = sorted.map(w => {
+        // Mode 1: Copy words with repetition count
+        textToCopy = sortedHighlightedWords.map(w => {
             const timesStr = w.count === 1 ? 'مرة' : w.count === 2 ? 'مرتان' : w.count <= 10 ? 'مرات' : 'مرة';
             return `${w.word} (${w.count} ${timesStr})`;
         }).join('، ');
-        toastMsg = 'تم النسخ: مرتبة حسب الأكثر تكراراً';
+        toastMsg = `تم النسخ: الكلمات + عدد التكرار (${sortLabel})`;
         nextMode = 0;
     }
 
@@ -335,47 +392,113 @@ export const SearchView: React.FC<SearchViewProps> = ({
         
         {results.length > 0 && (
           <>
-            {highlightedWordOccurrences.length > 0 && (
-              <div className="my-4 p-3.5 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-xl transition-all shadow-2xs">
-                <div className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
+            {sortedHighlightedWords.length > 0 && (
+              <div className="my-4 p-3.5 sm:p-4 bg-surface-subtle border border-border-default rounded-xl transition-all shadow-2xs">
+                {/* Header Row */}
+                <div className="flex items-center justify-between gap-2 mb-3 flex-wrap border-b border-border-subtle pb-2.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-                    <span className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">
-                      الكلمات المحددة وعدد تكرارها ({highlightedWordOccurrences.length} كلمات):
+                    <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
+                    <span className="text-xs sm:text-sm font-bold text-text-primary">
+                      الكلمات المحددة وعدد تكرارها ({sortedHighlightedWords.length} كلمة):
                     </span>
-                    <span className="text-[11px] text-amber-800/80 dark:text-amber-300/80 font-medium">
-                      (انقر على أي كلمة لتصفية النتائج بها)
+                    <span className="text-[11px] text-text-muted font-medium hidden sm:inline">
+                      (انقر على الكلمات لتصفية النتائج بها)
                     </span>
                   </div>
-                  {activePhraseFilter !== 'all' && (
+
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button 
-                      onClick={() => setActivePhraseFilter('all')}
-                      className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-500/25 hover:bg-amber-500/35 text-amber-950 dark:text-amber-100 border border-amber-400/50 transition-colors flex items-center gap-1 cursor-pointer"
-                      title="عرض جميع النتائج بدون تصفية"
+                      onClick={handleCopyHighlightedWords}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-surface hover:bg-surface-hover text-text-primary border border-border-default hover:border-primary/50 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      title="نسخ جميع الكلمات المحددة حسب الترتيب الحالي"
                     >
-                      <span>إلغاء التصفية (عرض الكل)</span>
-                      <span className="font-bold">✕</span>
+                      <DocumentDuplicateIcon className="w-3.5 h-3.5 text-primary" />
+                      <span>{isHighlightedCopied ? (copyHighlightedToast || 'تم النسخ!') : 'نسخ محتوى المربع'}</span>
                     </button>
-                  )}
+
+                    {activePhraseFilter !== 'all' && (
+                      <button 
+                        onClick={() => setActivePhraseFilter('all')}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-primary text-white hover:bg-primary-hover transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                        title="عرض جميع النتائج بدون تصفية"
+                      >
+                        <span>إلغاء التصفية (عرض الكل)</span>
+                        <span className="font-bold">✕</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto pr-1">
-                  {highlightedWordOccurrences.map(({ word, normalized, count }) => {
+
+                {/* Sort Control Bar */}
+                <div className="flex items-center justify-between gap-2 mb-3 flex-wrap text-xs">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-semibold text-text-muted">ترتيب الكلمات:</span>
+                    <div className="inline-flex rounded-lg bg-surface p-0.5 border border-border-default flex-wrap gap-0.5">
+                      <button
+                        onClick={() => setWordSortMode('match')}
+                        className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer flex items-center gap-1 ${
+                          wordSortMode === 'match'
+                            ? 'bg-primary text-white shadow-xs'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
+                        }`}
+                        title="ترتيب ذكي: الكلمة المطابقة تماماً -> الكلمات التي تبدأ بها -> الكلمات المحتواة"
+                      >
+                        <svg className="w-3.5 h-3.5 opacity-90" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                        </svg>
+                        <span>الذكي (درجة التطابق)</span>
+                      </button>
+                      <button
+                        onClick={() => setWordSortMode('frequency')}
+                        className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer flex items-center gap-1 ${
+                          wordSortMode === 'frequency'
+                            ? 'bg-primary text-white shadow-xs'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
+                        }`}
+                        title="ترتيب حسب الكلمات الأكثر تكراراً في نتائج البحث"
+                      >
+                        <svg className="w-3.5 h-3.5 opacity-90" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zm0 4a1 1 0 000 2h7a1 1 0 100-2H3zm0 4a1 1 0 100 2h4a1 1 0 100-2H3z" clipRule="evenodd" />
+                        </svg>
+                        <span>الأكثر تكراراً</span>
+                      </button>
+                      <button
+                        onClick={() => setWordSortMode('quran')}
+                        className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer flex items-center gap-1 ${
+                          wordSortMode === 'quran'
+                            ? 'bg-primary text-white shadow-xs'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover'
+                        }`}
+                        title="ترتيب حسب تسلسل الورود في المصحف"
+                      >
+                        <svg className="w-3.5 h-3.5 opacity-90" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                        </svg>
+                        <span>ترتيب المصحف</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Words Cloud */}
+                <div className="flex flex-wrap gap-2 max-h-56 overflow-y-auto pr-1">
+                  {sortedHighlightedWords.map(({ word, normalized, count }) => {
                     const isActive = activeFiltersList.includes(normalized) || activeFiltersList.includes(word);
                     return (
                       <button 
                         key={normalized}
                         onClick={() => handleToggleWordFilter(word, normalized)}
                         title={isActive ? "انقر لإلغاء التصفية بهذه الكلمة" : `انقر لتصفية النتائج بالكلمة "${word}"`}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary ${
                           isActive 
-                            ? 'bg-amber-600 text-white font-bold ring-2 ring-amber-500 shadow-md scale-105' 
-                            : 'bg-amber-100 dark:bg-amber-900/40 text-amber-950 dark:text-amber-100 border border-amber-300/70 dark:border-amber-700/60 shadow-2xs hover:bg-amber-200 dark:hover:bg-amber-900/60'
+                            ? 'bg-primary text-white font-bold ring-2 ring-primary/40 shadow-md scale-105' 
+                            : 'bg-surface text-text-primary border border-border-default shadow-2xs hover:border-primary/50 hover:bg-surface-hover'
                         }`}
                       >
                         {isActive && <span className="font-bold text-xs">✓</span>}
                         <span>{word}</span>
                         <span className={`px-1.5 py-0.5 rounded-md font-bold font-mono text-[11px] ${
-                          isActive ? 'bg-white/20 text-white' : 'bg-amber-500/20 text-amber-900 dark:text-amber-200'
+                          isActive ? 'bg-white/20 text-white' : 'bg-surface-subtle text-text-muted border border-border-subtle'
                         }`}>
                           {count} {count === 1 ? 'مرة' : count === 2 ? 'مرتان' : count <= 10 ? 'مرات' : 'مرة'}
                         </span>
