@@ -45,6 +45,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
 }) => {
   const [editableQuery, setEditableQuery] = useState(query);
   const [isAllCopied, setIsAllCopied] = useState(false);
+  const [isHighlightedCopied, setIsHighlightedCopied] = useState(false);
   
   // Consume Settings from Context
   const { displayEdition, fontStyle, selectedAudioEdition, setSelectedAudioEdition, activeEditions, fontSize } = useSettingsContext();
@@ -144,6 +145,44 @@ export const SearchView: React.FC<SearchViewProps> = ({
     });
   };
 
+  const handleCopyHighlightedWords = () => {
+    if (displayedResults.length === 0 || queryWords.length === 0) return;
+
+    const isImlaei = fontStyle === 'imlai_1' || fontStyle === 'imlai_2';
+    const collectedWords: string[] = [];
+
+    displayedResults.forEach(resultAyah => {
+        const displaySurah = displayEditionData.find(s => s.number === resultAyah.surah?.number);
+        const displayAyah = displaySurah?.ayahs.find(a => a.numberInSurah === resultAyah.numberInSurah);
+        let textToRender = displayAyah?.text || resultAyah.text || '';
+
+        if (!textToRender) return;
+
+        if (isImlaei) {
+            const marksToRemoveRegex = /[\u06D6-\u06ED]/g;
+            textToRender = textToRender.replace(marksToRemoveRegex, '');
+        }
+
+        const words = textToRender.split(/\s+/).filter(Boolean);
+        words.forEach(word => {
+            const normalizedWord = normalizeArabicText(word);
+            const isMatch = queryWords.some(queryWord => normalizedWord.includes(queryWord));
+            if (isMatch) {
+                collectedWords.push(word);
+            }
+        });
+    });
+
+    const uniqueWords = Array.from(new Set(collectedWords));
+    if (uniqueWords.length > 0) {
+        const textToCopy = uniqueWords.join('، ');
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            setIsHighlightedCopied(true);
+            setTimeout(() => setIsHighlightedCopied(false), 2500);
+        });
+    }
+  };
+
   const handleDownloadAll = () => {
     const textToDownload = formatResultsForExport(displayEditionData);
     if (textToDownload) {
@@ -226,7 +265,10 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 onPlayAll={handlePlayAll} selectedAudioEdition={selectedAudioEdition}
                 onAudioEditionChange={setSelectedAudioEdition} searchType={searchType}
                 onSaveSearch={handleSaveSearch} onCopyAll={handleCopyAll}
-                isAllCopied={isAllCopied} onDownloadAll={handleDownloadAll}
+                isAllCopied={isAllCopied}
+                onCopyHighlightedWords={handleCopyHighlightedWords}
+                isHighlightedCopied={isHighlightedCopied}
+                onDownloadAll={handleDownloadAll}
             />
           </>
         )}

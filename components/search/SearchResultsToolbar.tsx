@@ -13,13 +13,15 @@ interface SearchResultsToolbarProps {
     onSaveSearch: () => void;
     onCopyAll: () => void;
     isAllCopied: boolean;
+    onCopyHighlightedWords?: () => void;
+    isHighlightedCopied?: boolean;
     onDownloadAll: () => void;
 }
 
 const SearchResultsToolbar: React.FC<SearchResultsToolbarProps> = ({
     isPlaybackLoading, allAudioEditions, onPlayAll, selectedAudioEdition,
     onAudioEditionChange, searchType, onSaveSearch, onCopyAll, isAllCopied,
-    onDownloadAll
+    onCopyHighlightedWords, isHighlightedCopied, onDownloadAll
 }) => {
     return (
         <div className="flex items-center flex-wrap gap-2 my-6 p-3 bg-surface-subtle rounded-lg border border-border-default w-full max-w-full overflow-hidden">
@@ -40,10 +42,23 @@ const SearchResultsToolbar: React.FC<SearchResultsToolbarProps> = ({
                 </div>
             </div>
             {searchType === 'text' && (
-                <button onClick={onSaveSearch} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm text-text-secondary bg-surface hover:bg-surface-hover border border-border-default shadow-sm transition-colors">
-                    <BookmarkIcon className="w-4 h-4"/>
-                    <span>حفظ البحث</span>
-                </button>
+                <>
+                    <button onClick={onSaveSearch} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm text-text-secondary bg-surface hover:bg-surface-hover border border-border-default shadow-sm transition-colors">
+                        <BookmarkIcon className="w-4 h-4"/>
+                        <span>حفظ البحث</span>
+                    </button>
+                    {onCopyHighlightedWords && (
+                        <button 
+                            onClick={onCopyHighlightedWords} 
+                            disabled={isHighlightedCopied} 
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm text-text-secondary bg-surface hover:bg-surface-hover border border-border-default shadow-sm transition-colors disabled:opacity-70"
+                            title="نسخ الكلمات المظللة باللون الأصفر من النتائج مفصولة بفاصل"
+                        >
+                            {isHighlightedCopied ? <CheckIcon className="w-4 h-4 text-green-500"/> : <DocumentDuplicateIcon className="w-4 h-4 text-amber-500"/>}
+                            <span>{isHighlightedCopied ? 'تم نسخ الكلمات!' : 'نسخ الكلمات المحددة'}</span>
+                        </button>
+                    )}
+                </>
             )}
             <button onClick={onCopyAll} disabled={isAllCopied} className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm text-text-secondary bg-surface hover:bg-surface-hover border border-border-default shadow-sm transition-colors disabled:opacity-70">
                 {isAllCopied ? <CheckIcon className="w-4 h-4 text-green-500"/> : <DocumentDuplicateIcon className="w-4 h-4"/>}
