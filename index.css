@@ -18,47 +18,28 @@
   --color-border-subtle: var(--color-border-subtle);
 }
 
-/* --- THEME DEFINITIONS (4 ACADEMIC & EYE-FRIENDLY THEMES: 2 LIGHT, 2 DARK) --- */
+/* --- THEME DEFINITIONS (4 ACADEMIC & EYE-FRIENDLY THEMES: ALTERNATING LIGHT -> DARK -> LIGHT -> DARK) --- */
 
-/* ☀️ Light 1: Classic Ivory (عاجي كلاسيكي) */
+/* ☀️ Light 1: Warm Paper (ورقي دافئ - نهاري 1) */
 :root, .theme-light {
-  --color-background: #FAF8F5;
+  --color-background: #FAF7F2;
   --color-surface: #FFFFFF;
-  --color-surface-hover: #F3EFEA;
-  --color-surface-active: #EAE4DC;
-  --color-surface-subtle: #F7F4EF;
-  --color-text-primary: #1C2024;
-  --color-text-secondary: #4A525A;
-  --color-text-muted: #707A84;
-  --color-text-subtle: #8F98A1;
-  --color-primary: #16A34A;
-  --color-primary-hover: #15803D;
+  --color-surface-hover: #F3EFE7;
+  --color-surface-active: #E8E2D7;
+  --color-surface-subtle: #F5F1EA;
+  --color-text-primary: #2A2521;
+  --color-text-secondary: #544E48;
+  --color-text-muted: #7C746C;
+  --color-text-subtle: #9C9389;
+  --color-primary: #15803D;
+  --color-primary-hover: #166534;
   --color-primary-text: #15803D;
-  --color-primary-text-strong: #166534;
-  --color-border-default: #E5E0D8;
-  --color-border-subtle: #EFEDE8;
+  --color-primary-text-strong: #14532D;
+  --color-border-default: #E8E2D7;
+  --color-border-subtle: #F2ECE2;
 }
 
-/* 📄 Light 2: Academic Paper (ورقي أكاديمي) */
-.theme-duha {
-  --color-background: #F8FAFC;
-  --color-surface: #FFFFFF;
-  --color-surface-hover: #F1F5F9;
-  --color-surface-active: #E2E8F0;
-  --color-surface-subtle: #F8FAFC;
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #334155;
-  --color-text-muted: #64748B;
-  --color-text-subtle: #94A3B8;
-  --color-primary: #2563EB;
-  --color-primary-hover: #1D4ED8;
-  --color-primary-text: #1D4ED8;
-  --color-primary-text-strong: #1E40AF;
-  --color-border-default: #E2E8F0;
-  --color-border-subtle: #F1F5F9;
-}
-
-/* 🌙 Dark 1: Midnight Slate Navy (كحلي هادئ) */
+/* 🌙 Dark 1: Slate Charcoal Navy (كحلي هادئ - ليلي 1) */
 .theme-dark {
   --color-background: #0F172A;
   --color-surface: #1E293B;
@@ -77,11 +58,30 @@
   --color-border-subtle: #1E293B;
 }
 
-/* 🌌 Dark 2: Dark Olive Obsidian (زيتي داكن) */
+/* 📄 Light 2: Academic Cool Light (أكاديمي نقي - نهاري 2) */
+.theme-duha {
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F1F5F9;
+  --color-surface-active: #E2E8F0;
+  --color-surface-subtle: #F8FAFC;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748B;
+  --color-text-subtle: #94A3B8;
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-text: #2563EB;
+  --color-primary-text-strong: #1E40AF;
+  --color-border-default: #E2E8F0;
+  --color-border-subtle: #F1F5F9;
+}
+
+/* 🌌 Dark 2: Deep Forest Olive (زيتي ليلي - ليلي 2) */
 .theme-isha {
-  --color-background: #121614;
-  --color-surface: #1C221F;
-  --color-surface-hover: #28322D;
+  --color-background: #111614;
+  --color-surface: #1B221E;
+  --color-surface-hover: #27322B;
   --color-surface-active: #35423B;
   --color-surface-subtle: #171D1A;
   --color-text-primary: #E8EBE4;
