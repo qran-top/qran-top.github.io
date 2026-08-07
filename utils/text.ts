@@ -24,17 +24,16 @@ export const normalizeArabicText = (word: string | undefined): string => {
 // This helper cleans a surah name for clean display (e.g., for copying or UI titles).
 export const formatSurahNameForDisplay = (name: string | undefined): string => {
     if (!name) return '';
-    // Example: "سُورَةُ ٱلْفَاتِحَةِ" -> "الفاتحة"
-    let cleaned = name.replace(/^سُورَةُ\s*/, '');
     
-    // This comprehensive regex removes all common Arabic diacritics (tashkeel),
-    // including Shadda, and various Quranic annotation marks.
-    // It is designed to clean the text for display without altering the base letters.
+    // First, remove all common Arabic diacritics (tashkeel), Shadda, and Quranic annotation marks.
     const diacriticsRegex = /[\u0617-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g;
-    cleaned = cleaned.replace(diacriticsRegex, '');
+    let cleaned = name.replace(diacriticsRegex, '').replace(/ـ/g, '').trim();
 
-    // Also remove Tatweel (Kashida), which is used for justification.
-    cleaned = cleaned.replace(/ـ/g, '');
-    
+    // Replace Alif Wasla (ٱ) with plain Alif (ا)
+    cleaned = cleaned.replace(/ٱ/g, 'ا');
+
+    // Remove any leading "سورة" or "سوره" prefix
+    cleaned = cleaned.replace(/^(سورة|سوره)\s*/i, '');
+
     return cleaned.trim();
 };

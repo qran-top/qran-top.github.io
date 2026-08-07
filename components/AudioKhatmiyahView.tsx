@@ -12,6 +12,7 @@ import AudioEditionSelector from './AudioEditionSelector';
 import KhatmiyahNavigationModal from './khatmiyah/KhatmiyahNavigationModal';
 import SettingsModal from './khatmiyah/SettingsModal';
 import { getQuranTextStyle } from '../utils/font';
+import { formatSurahNameForDisplay } from '../utils/text';
 
 interface AudioKhatmiyahViewProps {
     allAyahs: Ayah[];
@@ -386,7 +387,7 @@ const AudioKhatmiyahView: React.FC<AudioKhatmiyahViewProps> = ({
                 >
                     <BookOpenIcon className="w-4 h-4 text-primary flex-shrink-0" />
                     <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-text-primary truncate">
-                        <span className="truncate">سورة {currentAyah.surah?.name}</span>
+                        <span className="truncate">سورة {formatSurahNameForDisplay(currentAyah.surah?.name)}</span>
                         <span className="opacity-40">•</span>
                         <span className="text-[11px] sm:text-xs text-text-muted font-mono">آية {currentAyah.numberInSurah}</span>
                         <span className="opacity-40 hidden sm:inline">•</span>

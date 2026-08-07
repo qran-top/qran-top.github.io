@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import type { Ayah, QuranEdition } from '../types';
 import { PlayIcon, PauseIcon, ForwardIcon, BackwardIcon, XIcon, SpinnerIcon } from './icons';
+import { formatSurahNameForDisplay } from '../utils/text';
 
 interface AudioPlayerBarProps {
     playlist: Ayah[];
@@ -80,7 +81,7 @@ const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ playlist, currentIndex,
 
     const getSurahName = () => {
         if (!currentAyah?.surah?.name) return '...';
-        return currentAyah.surah.name.replace(/^سُورَةُ\s*/, '').trim();
+        return formatSurahNameForDisplay(currentAyah.surah.name);
     }
 
     const getTitle = () => {

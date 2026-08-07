@@ -1,7 +1,7 @@
 // FIX: Import useEffect from 'react' to resolve 'Cannot find name' error.
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Ayah } from '../types';
-import { normalizeArabicText } from '../utils/text';
+import { normalizeArabicText, formatSurahNameForDisplay } from '../utils/text';
 import { safeLocalStorage } from '../utils/storage';
 
 const EXPORT_TEMPLATE_KEY = 'qran_app_export_template';
@@ -303,8 +303,11 @@ export const useSearchLogic = (
                 const displayAyah = displaySurah?.ayahs.find(a => a.numberInSurah === resultAyah.numberInSurah);
                 const textToExport = displayAyah?.text || resultAyah.text || '';
 
+                const rawSurahName = resultAyah.surah?.name || displaySurah?.name || '';
+                const cleanSurahName = formatSurahNameForDisplay(rawSurahName);
+
                 itemString = itemString.replace(/{{ayah_text}}/g, textToExport);
-                itemString = itemString.replace(/{{surah_name}}/g, resultAyah.surah?.name || '');
+                itemString = itemString.replace(/{{surah_name}}/g, cleanSurahName || rawSurahName);
                 itemString = itemString.replace(/{{ayah_number_in_surah}}/g, String(resultAyah.numberInSurah));
                 return itemString;
             }).join('');
