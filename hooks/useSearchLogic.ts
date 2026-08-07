@@ -79,6 +79,25 @@ const findNeighboringWords = (results: Ayah[], query: string): string[] => {
         .map(([word]) => word);
 };
 
+const getAyahMatchTier = (ayah: Ayah, queryWords: string[]): number => {
+    if (!queryWords || queryWords.length === 0) return 0;
+    const words = getNormalizedText(ayah).split(/\s+/).filter(Boolean);
+    if (words.length === 0) return 2;
+    
+    const fullQuery = queryWords.join(' ');
+    
+    // Tier 0: Exact word match in the ayah
+    const hasExactWord = words.some(w => w === fullQuery || queryWords.includes(w));
+    if (hasExactWord) return 0;
+
+    // Tier 1: Match at the start of a word (word begins with search query word)
+    const hasStartsWith = words.some(w => queryWords.some(q => q && w.startsWith(q)));
+    if (hasStartsWith) return 1;
+
+    // Tier 2: Match in the middle or end of a word
+    return 2;
+};
+
 
 export const useSearchLogic = (
     query: string, 
@@ -180,18 +199,27 @@ export const useSearchLogic = (
             baseResults = baseResults.filter(ayah => regex.test(getNormalizedText(ayah)));
         }
         
-        if (activePhraseFilter === 'all') {
-            return baseResults;
+        let filtered = baseResults;
+        if (activePhraseFilter !== 'all') {
+            if (isRootSearch) {
+                filtered = baseResults.filter(ayah => {
+                    const ayahWords = getNormalizedText(ayah).split(' ');
+                    return ayahWords.includes(activePhraseFilter);
+                });
+            } else {
+                filtered = baseResults.filter(ayah => getNormalizedText(ayah).includes(activePhraseFilter));
+            }
         }
 
-        if (isRootSearch) {
-            return baseResults.filter(ayah => {
-                const ayahWords = getNormalizedText(ayah).split(' ');
-                return ayahWords.includes(activePhraseFilter);
+        if (searchType === 'text' && queryWords.length > 0) {
+            return [...filtered].sort((a, b) => {
+                const tierA = getAyahMatchTier(a, queryWords);
+                const tierB = getAyahMatchTier(b, queryWords);
+                return tierA - tierB;
             });
         }
 
-        return baseResults.filter(ayah => getNormalizedText(ayah).includes(activePhraseFilter));
+        return filtered;
     }, [activeResults, queryWords, exactMatch, searchType, activePhraseFilter, isSingleWordSearch, isRootSearch]);
 
     const occurrencesMap = useMemo(() => {
