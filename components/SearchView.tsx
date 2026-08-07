@@ -43,9 +43,12 @@ export const SearchView: React.FC<SearchViewProps> = ({
     currentlyPlayingAyahGlobalNumber, isPlaybackLoading, onStartPlayback,
     correctedQuery, isRootSearch = false
 }) => {
+  const [isEditableQuery, setIsEditableQuery] = useState(false);
   const [editableQuery, setEditableQuery] = useState(query);
   const [isAllCopied, setIsAllCopied] = useState(false);
   const [isHighlightedCopied, setIsHighlightedCopied] = useState(false);
+  const [copyHighlightedMode, setCopyHighlightedMode] = useState<number>(0);
+  const [copyHighlightedToast, setCopyHighlightedToast] = useState<string>('');
   
   // Consume Settings from Context
   const { displayEdition, fontStyle, selectedAudioEdition, setSelectedAudioEdition, activeEditions, fontSize } = useSettingsContext();
@@ -137,19 +140,13 @@ export const SearchView: React.FC<SearchViewProps> = ({
     if (queryToSave) onSaveSearch({ type: 'search', id: queryToSave, query: queryToSave, createdAt: Date.now() });
   };
   
-  const handleCopyAll = () => {
-    const textToCopy = formatResultsForExport(displayEditionData);
-    if (textToCopy) navigator.clipboard.writeText(textToCopy).then(() => {
-        setIsAllCopied(true);
-        setTimeout(() => setIsAllCopied(false), 2500);
-    });
-  };
-
-  const handleCopyHighlightedWords = () => {
-    if (displayedResults.length === 0 || queryWords.length === 0) return;
+  const highlightedWordOccurrences = useMemo(() => {
+    if (displayedResults.length === 0 || queryWords.length === 0 || searchType !== 'text') return [];
 
     const isImlaei = fontStyle === 'imlai_1' || fontStyle === 'imlai_2';
-    const collectedWords: string[] = [];
+    const wordMap = new Map<string, { displayWord: string; count: number; order: number }>();
+    const appearanceOrder: string[] = [];
+    let counter = 0;
 
     displayedResults.forEach(resultAyah => {
         const displaySurah = displayEditionData.find(s => s.number === resultAyah.surah?.number);
@@ -168,19 +165,75 @@ export const SearchView: React.FC<SearchViewProps> = ({
             const normalizedWord = normalizeArabicText(word);
             const isMatch = queryWords.some(queryWord => normalizedWord.includes(queryWord));
             if (isMatch) {
-                collectedWords.push(word);
+                const key = normalizedWord;
+                if (!wordMap.has(key)) {
+                    wordMap.set(key, { displayWord: word, count: 1, order: counter++ });
+                    appearanceOrder.push(key);
+                } else {
+                    const item = wordMap.get(key)!;
+                    item.count += 1;
+                }
             }
         });
     });
 
-    const uniqueWords = Array.from(new Set(collectedWords));
-    if (uniqueWords.length > 0) {
-        const textToCopy = uniqueWords.join('، ');
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            setIsHighlightedCopied(true);
-            setTimeout(() => setIsHighlightedCopied(false), 2500);
-        });
+    return appearanceOrder.map(key => {
+        const item = wordMap.get(key)!;
+        return {
+            word: item.displayWord,
+            count: item.count
+        };
+    });
+  }, [displayedResults, displayEditionData, queryWords, searchType, fontStyle]);
+
+  const handleCopyAll = () => {
+    const textToCopy = formatResultsForExport(displayEditionData);
+    if (textToCopy) navigator.clipboard.writeText(textToCopy).then(() => {
+        setIsAllCopied(true);
+        setTimeout(() => setIsAllCopied(false), 2500);
+    });
+  };
+
+  const handleCopyHighlightedWords = () => {
+    if (highlightedWordOccurrences.length === 0) return;
+
+    let textToCopy = '';
+    let toastMsg = '';
+    let nextMode = 0;
+
+    if (copyHighlightedMode === 0) {
+        // Mode 0: Copy words only (without repetition count)
+        textToCopy = highlightedWordOccurrences.map(w => w.word).join('، ');
+        toastMsg = 'تم النسخ: الكلمات فقط (بدون تكرار)';
+        nextMode = 1;
+    } else if (copyHighlightedMode === 1) {
+        // Mode 1: Copy words with repetition count (in appearance order)
+        textToCopy = highlightedWordOccurrences.map(w => {
+            const timesStr = w.count === 1 ? 'مرة' : w.count === 2 ? 'مرتان' : w.count <= 10 ? 'مرات' : 'مرة';
+            return `${w.word} (${w.count} ${timesStr})`;
+        }).join('، ');
+        toastMsg = 'تم النسخ: الكلمات + عدد التكرار';
+        nextMode = 2;
+    } else {
+        // Mode 2: Copy words sorted by highest count first, with repetition count
+        const sorted = [...highlightedWordOccurrences].sort((a, b) => b.count - a.count);
+        textToCopy = sorted.map(w => {
+            const timesStr = w.count === 1 ? 'مرة' : w.count === 2 ? 'مرتان' : w.count <= 10 ? 'مرات' : 'مرة';
+            return `${w.word} (${w.count} ${timesStr})`;
+        }).join('، ');
+        toastMsg = 'تم النسخ: مرتبة حسب الأكثر تكراراً';
+        nextMode = 0;
     }
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        setIsHighlightedCopied(true);
+        setCopyHighlightedToast(toastMsg);
+        setCopyHighlightedMode(nextMode);
+        setTimeout(() => {
+            setIsHighlightedCopied(false);
+            setCopyHighlightedToast('');
+        }, 2500);
+    });
   };
 
   const handleDownloadAll = () => {
@@ -260,6 +313,35 @@ export const SearchView: React.FC<SearchViewProps> = ({
         
         {displayedResults.length > 0 && (
           <>
+            {highlightedWordOccurrences.length > 0 && (
+              <div className="my-4 p-3.5 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-xl transition-all shadow-2xs">
+                <div className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">
+                      الكلمات المحددة وعدد تكرارها في النتائج ({highlightedWordOccurrences.length} كلمات):
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-amber-800/80 dark:text-amber-300/80 font-medium">
+                    انقر على زر النسخ لتغيير نمط النسخ (1/3 ، 2/3 ، 3/3)
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
+                  {highlightedWordOccurrences.map(({ word, count }) => (
+                    <span 
+                      key={word}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-950 dark:text-amber-100 border border-amber-300/70 dark:border-amber-700/60 shadow-2xs hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-colors"
+                    >
+                      <span>{word}</span>
+                      <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-900 dark:text-amber-200 font-bold font-mono text-[11px]">
+                        {count} {count === 1 ? 'مرة' : count === 2 ? 'مرتان' : count <= 10 ? 'مرات' : 'مرة'}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <SearchResultsToolbar
                 isPlaybackLoading={isPlaybackLoading} allAudioEditions={ALL_AUDIO_EDITIONS}
                 onPlayAll={handlePlayAll} selectedAudioEdition={selectedAudioEdition}
@@ -268,6 +350,9 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 isAllCopied={isAllCopied}
                 onCopyHighlightedWords={handleCopyHighlightedWords}
                 isHighlightedCopied={isHighlightedCopied}
+                copyHighlightedMode={copyHighlightedMode}
+                copyHighlightedToast={copyHighlightedToast}
+                highlightedWordsCount={highlightedWordOccurrences.length}
                 onDownloadAll={handleDownloadAll}
             />
           </>
