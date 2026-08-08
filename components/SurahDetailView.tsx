@@ -26,6 +26,73 @@ interface SurahDetailViewProps {
   forcedPageNumber?: number; // Prop to enforce a specific page number
 }
 
+const SurahHeaderStrip: React.FC<{ surahNumber: number; surahName: string }> = ({ surahNumber, surahName }) => {
+  const info = QURAN_INDEX.find(s => s.number === surahNumber);
+  const ayahsCount = info?.numberOfAyahs || '';
+  const formattedName = formatSurahNameForDisplay(surahName);
+
+  return (
+    <div className="my-6 w-full select-none">
+      {/* Outer Decorative Islamic Strip Frame */}
+      <div className="relative border-2 border-amber-600/50 dark:border-amber-500/40 rounded-xl p-2 sm:p-3 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 dark:from-amber-500/20 dark:via-surface-subtle dark:to-amber-500/20 shadow-md overflow-hidden">
+        {/* Subtle Geometric Background Pattern */}
+        <div 
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 0 L24 12 L12 24 L0 12 Z' fill='none' stroke='%23d97706' stroke-width='1'/%3E%3Ccircle cx='12' cy='12' r='3.5' fill='%23d97706'/%3E%3C/svg%3E")`,
+            backgroundSize: '24px 24px'
+          }}
+        />
+
+        {/* Inner Border Line for Authentic Mushaf Strip Look */}
+        <div className="relative border border-amber-600/40 dark:border-amber-500/30 rounded-lg px-3 py-2.5 sm:px-5 flex items-center justify-between gap-2 bg-surface/75 dark:bg-surface/50 backdrop-blur-xs">
+          
+          {/* Right Info: Surah Order in Quran */}
+          <div className="hidden sm:flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-200 min-w-[100px]">
+            <span className="text-amber-600 dark:text-amber-400 text-base">۞</span>
+            <span>ترتيبها:</span>
+            <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{surahNumber}</span>
+          </div>
+
+          {/* Center Title Banner */}
+          <div className="flex-1 text-center flex items-center justify-center gap-2 sm:gap-4">
+            <span className="text-amber-600 dark:text-amber-400 text-xl font-serif opacity-80">﴿</span>
+            <a 
+              href={`#/surah/${surahNumber}`}
+              className="inline-block transition-transform duration-200 hover:scale-105 cursor-pointer"
+              title={`فتح سورة ${formattedName}`}
+            >
+              <h2 className="font-quran-title text-2xl sm:text-3xl font-bold text-amber-900 dark:text-amber-100 hover:text-primary transition-colors tracking-wide">
+                {formattedName}
+              </h2>
+            </a>
+            <span className="text-amber-600 dark:text-amber-400 text-xl font-serif opacity-80">﴾</span>
+          </div>
+
+          {/* Left Info: Ayahs Count */}
+          <div className="hidden sm:flex items-center justify-end gap-1.5 text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-200 min-w-[100px]">
+            <span>آياتها:</span>
+            <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{ayahsCount}</span>
+            <span className="text-amber-600 dark:text-amber-400 text-base">۞</span>
+          </div>
+        </div>
+
+        {/* Mobile Info Bar below center title on small screens */}
+        <div className="sm:hidden mt-1.5 pt-1.5 border-t border-amber-600/20 dark:border-amber-500/20 flex justify-between text-[12px] text-amber-900 dark:text-amber-200 px-3 font-medium">
+          <div className="flex items-center gap-1">
+            <span>ترتيبها:</span>
+            <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{surahNumber}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span>آياتها:</span>
+            <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{ayahsCount}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SurahDetailView: React.FC<SurahDetailViewProps> = ({ 
   surah, pageSurahs, highlightAyahNumber, onWordClick,
   onSaveAyah, onSearchByAyahNumber,
@@ -565,17 +632,7 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
 
                                     {/* Surah Header if start of surah */}
                                     {isStartOfSurah && (
-                                        <div className="text-center my-6 bg-surface-subtle/50 border-y border-border-default py-2 rounded-lg">
-                                            <a 
-                                                href={`#/surah/${surahSegment.number}`}
-                                                className="inline-block hover:text-primary transition-colors cursor-pointer"
-                                                title={`فتح سورة ${formatSurahNameForDisplay(surahSegment.name)}`}
-                                            >
-                                                <h2 className="font-quran-title text-2xl text-primary-text-strong hover:text-primary">
-                                                    {formatSurahNameForDisplay(surahSegment.name)}
-                                                </h2>
-                                            </a>
-                                        </div>
+                                        <SurahHeaderStrip surahNumber={surahSegment.number} surahName={surahSegment.name} />
                                     )}
 
                                     {/* Bismillah */}
@@ -650,9 +707,7 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
                      return (
                         <div key={surahSegment.number} className={index > 0 ? "mt-8 pt-8 border-t border-dashed border-border-default" : ""}>
                              {isStartOfSurah && (
-                                <div className="text-center mb-6">
-                                    <h2 className="font-quran-title text-3xl text-primary-text-strong">{formatSurahNameForDisplay(surahSegment.name)}</h2>
-                                </div>
+                                <SurahHeaderStrip surahNumber={surahSegment.number} surahName={surahSegment.name} />
                             )}
                             {showBismillah && (
                                 <div className="text-center mb-8 font-bismillah text-2xl text-primary-text-strong">
