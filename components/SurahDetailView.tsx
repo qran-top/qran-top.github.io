@@ -8,7 +8,7 @@ import { formatSurahNameForDisplay } from '../utils/text';
 import { QURAN_INDEX } from '../quranIndex';
 import { getQuranTextStyle } from '../utils/font';
 import { useSettingsContext } from '../contexts/SettingsContext';
-import { MushafCornerOrnaments, IslamicSectionDivider } from './IslamicDecorations';
+import { IslamicSectionDivider } from './IslamicDecorations';
 
 interface SurahDetailViewProps {
   surah: SurahData;
@@ -605,7 +605,6 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
         {browsingMode === 'page' ? (
              <div>
                 <div className="mushaf-page relative">
-                    <MushafCornerOrnaments />
                     {pageInfo?.markers.map((marker, index) => (
                          <div key={index} className={`hizb-marker ${pageInfo.side}`}>{marker.label}</div>
                     ))}
