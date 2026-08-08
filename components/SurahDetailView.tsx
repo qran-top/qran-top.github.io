@@ -8,6 +8,7 @@ import { formatSurahNameForDisplay } from '../utils/text';
 import { QURAN_INDEX } from '../quranIndex';
 import { getQuranTextStyle } from '../utils/font';
 import { useSettingsContext } from '../contexts/SettingsContext';
+import { MushafCornerOrnaments, IslamicSectionDivider } from './IslamicDecorations';
 
 interface SurahDetailViewProps {
   surah: SurahData;
@@ -33,59 +34,70 @@ const SurahHeaderStrip: React.FC<{ surahNumber: number; surahName: string }> = (
 
   return (
     <div className="my-6 w-full select-none">
-      {/* Outer Decorative Islamic Strip Frame */}
-      <div className="relative border-2 border-amber-600/50 dark:border-amber-500/40 rounded-xl p-2 sm:p-3 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 dark:from-amber-500/20 dark:via-surface-subtle dark:to-amber-500/20 shadow-md overflow-hidden">
-        {/* Subtle Geometric Background Pattern */}
-        <div 
-          className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12 0 L24 12 L12 24 L0 12 Z' fill='none' stroke='%23d97706' stroke-width='1'/%3E%3Ccircle cx='12' cy='12' r='3.5' fill='%23d97706'/%3E%3C/svg%3E")`,
-            backgroundSize: '24px 24px'
-          }}
-        />
+      {/* Outer Traditional Islamic Frame Container - Theme Adaptive */}
+      <div className="relative border-2 border-primary/40 rounded-xl p-1.5 sm:p-2.5 bg-gradient-to-r from-primary/15 via-primary/5 to-primary/15 shadow-md overflow-hidden transition-colors duration-300">
+        
+        {/* Fine Geometric Background Pattern (Inherits theme primary color) */}
+        <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none text-primary" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id={`header-pattern-${surahNumber}`} width="32" height="32" patternUnits="userSpaceOnUse">
+              <path d="M16 0 L32 16 L16 32 L0 16 Z M16 4 L28 16 L16 28 L4 16 Z" fill="none" stroke="currentColor" strokeWidth="0.75" />
+              <circle cx="16" cy="16" r="2.5" fill="currentColor" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill={`url(#header-pattern-${surahNumber})`} />
+        </svg>
 
-        {/* Inner Border Line for Authentic Mushaf Strip Look */}
-        <div className="relative border border-amber-600/40 dark:border-amber-500/30 rounded-lg px-3 py-2.5 sm:px-5 flex items-center justify-between gap-2 bg-surface/75 dark:bg-surface/50 backdrop-blur-xs">
+        {/* Decorative Corner Ornaments */}
+        <div className="absolute top-1 right-1.5 text-primary opacity-60 text-xs select-none pointer-events-none">❖</div>
+        <div className="absolute top-1 left-1.5 text-primary opacity-60 text-xs select-none pointer-events-none">❖</div>
+        <div className="absolute bottom-1 right-1.5 text-primary opacity-60 text-xs select-none pointer-events-none">❖</div>
+        <div className="absolute bottom-1 left-1.5 text-primary opacity-60 text-xs select-none pointer-events-none">❖</div>
+
+        {/* Inner Border Box */}
+        <div className="relative border border-primary/30 rounded-lg px-3 py-2 sm:px-6 sm:py-3 flex items-center justify-between gap-3 bg-surface/90 backdrop-blur-xs transition-colors duration-300">
           
           {/* Right Info: Surah Order in Quran */}
-          <div className="hidden sm:flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-200 min-w-[100px]">
-            <span className="text-amber-600 dark:text-amber-400 text-base">۞</span>
+          <div className="hidden sm:flex items-center gap-2 text-xs sm:text-sm font-semibold text-text-secondary min-w-[110px]">
+            <span className="text-primary text-lg">۞</span>
             <span>ترتيبها:</span>
-            <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{surahNumber}</span>
+            <span className="font-mono font-bold text-primary-text px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20">{surahNumber}</span>
           </div>
 
-          {/* Center Title Banner */}
-          <div className="flex-1 text-center flex items-center justify-center gap-2 sm:gap-4">
-            <span className="text-amber-600 dark:text-amber-400 text-xl font-serif opacity-80">﴿</span>
+          {/* Center Title Banner with Decorative Rosettes */}
+          <div className="flex-1 text-center flex items-center justify-center gap-2 sm:gap-3">
+            <span className="text-primary text-xl font-serif opacity-75 hidden sm:inline">۞</span>
+            <span className="text-primary text-xl font-serif opacity-75">﴿</span>
             <a 
               href={`#/surah/${surahNumber}`}
               className="inline-block transition-transform duration-200 hover:scale-105 cursor-pointer"
               title={`فتح سورة ${formattedName}`}
             >
-              <h2 className="font-quran-title text-2xl sm:text-3xl font-bold text-amber-900 dark:text-amber-100 hover:text-primary transition-colors tracking-wide">
+              <h2 className="font-quran-title text-2.5xl sm:text-3xl font-bold text-primary-text-strong hover:text-primary transition-colors tracking-wide">
                 {formattedName}
               </h2>
             </a>
-            <span className="text-amber-600 dark:text-amber-400 text-xl font-serif opacity-80">﴾</span>
+            <span className="text-primary text-xl font-serif opacity-75">﴾</span>
+            <span className="text-primary text-xl font-serif opacity-75 hidden sm:inline">۞</span>
           </div>
 
           {/* Left Info: Ayahs Count */}
-          <div className="hidden sm:flex items-center justify-end gap-1.5 text-xs sm:text-sm font-semibold text-amber-900 dark:text-amber-200 min-w-[100px]">
+          <div className="hidden sm:flex items-center justify-end gap-2 text-xs sm:text-sm font-semibold text-text-secondary min-w-[110px]">
             <span>آياتها:</span>
-            <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{ayahsCount}</span>
-            <span className="text-amber-600 dark:text-amber-400 text-base">۞</span>
+            <span className="font-mono font-bold text-primary-text px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20">{ayahsCount}</span>
+            <span className="text-primary text-lg">۞</span>
           </div>
         </div>
 
         {/* Mobile Info Bar below center title on small screens */}
-        <div className="sm:hidden mt-1.5 pt-1.5 border-t border-amber-600/20 dark:border-amber-500/20 flex justify-between text-[12px] text-amber-900 dark:text-amber-200 px-3 font-medium">
-          <div className="flex items-center gap-1">
+        <div className="sm:hidden mt-1.5 pt-1.5 border-t border-primary/20 flex justify-between text-[12px] text-text-secondary px-3 font-medium">
+          <div className="flex items-center gap-1.5">
             <span>ترتيبها:</span>
-            <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{surahNumber}</span>
+            <span className="font-mono font-bold text-primary-text px-1.5 py-0.2 rounded bg-primary/10">{surahNumber}</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <span>آياتها:</span>
-            <span className="font-mono font-bold text-amber-700 dark:text-amber-300">{ayahsCount}</span>
+            <span className="font-mono font-bold text-primary-text px-1.5 py-0.2 rounded bg-primary/10">{ayahsCount}</span>
           </div>
         </div>
       </div>
@@ -592,7 +604,8 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
       <div className="overflow-hidden rounded-lg">
         {browsingMode === 'page' ? (
              <div>
-                <div className="mushaf-page">
+                <div className="mushaf-page relative">
+                    <MushafCornerOrnaments />
                     {pageInfo?.markers.map((marker, index) => (
                          <div key={index} className={`hizb-marker ${pageInfo.side}`}>{marker.label}</div>
                     ))}
@@ -621,13 +634,9 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
 
                             return (
                                 <React.Fragment key={surahSegment.number}>
-                                    {/* Decorative Separator if not the first surah on page */}
+                                    {/* Traditional Islamic Section Divider if not the first surah on page */}
                                     {index > 0 && (
-                                        <div className="my-6 flex items-center justify-center">
-                                            <div className="w-full h-10 bg-no-repeat bg-center bg-contain opacity-80" 
-                                                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 40' preserveAspectRatio='none'%3E%3Cpath d='M0 20 Q 100 0 200 20 T 400 20' fill='none' stroke='%2322c55e' stroke-width='2' opacity='0.5'/%3E%3Cpath d='M0 20 Q 100 40 200 20 T 400 20' fill='none' stroke='%2322c55e' stroke-width='2' opacity='0.5'/%3E%3Ccircle cx='200' cy='20' r='5' fill='%2322c55e'/%3E%3C/svg%3E")` }}>
-                                            </div>
-                                        </div>
+                                        <IslamicSectionDivider className="my-6" />
                                     )}
 
                                     {/* Surah Header if start of surah */}

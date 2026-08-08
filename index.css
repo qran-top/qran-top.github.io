@@ -273,32 +273,32 @@ html.dark .animate-highlight-pulse {
 
 /* Theme: Light */
 .theme-light .mushaf-page {
-  background-color: #f8f9fa; /* slightly off-white */
-  border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 0 C 15 15, 0 15, 0 15 L 0 0 Z' fill='none' stroke='%23166534' stroke-width='1'/%3E%3Cpath d='M15 0 C 15 15, 30 15, 30 15 L 30 0 Z' fill='none' stroke='%23166534' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 0 15, 0 15 L 0 30 Z' fill='none' stroke='%23166534' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 30 15, 30 15 L 30 30 Z' fill='none' stroke='%23166534' stroke-width='1'/%3E%3C/svg%3E");
+  background-color: var(--color-surface);
+  border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 0 C 15 15, 0 15, 0 15 L 0 0 Z' fill='none' stroke='%2315803d' stroke-width='1'/%3E%3Cpath d='M15 0 C 15 15, 30 15, 30 15 L 30 0 Z' fill='none' stroke='%2315803d' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 0 15, 0 15 L 0 30 Z' fill='none' stroke='%2315803d' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 30 15, 30 15 L 30 30 Z' fill='none' stroke='%2315803d' stroke-width='1'/%3E%3C/svg%3E");
 }
 
 /* Theme: Dark */
 .theme-dark .mushaf-page {
-  background-color: #1e1e1e;
-  border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 0 C 15 15, 0 15, 0 15 L 0 0 Z' fill='none' stroke='%234ade80' stroke-width='1'/%3E%3Cpath d='M15 0 C 15 15, 30 15, 30 15 L 30 0 Z' fill='none' stroke='%234ade80' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 0 15, 0 15 L 0 30 Z' fill='none' stroke='%234ade80' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 30 15, 30 15 L 30 30 Z' fill='none' stroke='%234ade80' stroke-width='1'/%3E%3C/svg%3E");
+  background-color: var(--color-surface);
+  border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 0 C 15 15, 0 15, 0 15 L 0 0 Z' fill='none' stroke='%2310b981' stroke-width='1'/%3E%3Cpath d='M15 0 C 15 15, 30 15, 30 15 L 0 0 Z' fill='none' stroke='%2310b981' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 0 15, 0 15 L 0 30 Z' fill='none' stroke='%2310b981' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 30 15, 30 15 L 30 30 Z' fill='none' stroke='%2310b981' stroke-width='1'/%3E%3C/svg%3E");
 }
 
 /* Theme: Dhuhr */
 .theme-dhuhr .mushaf-page {
-  background-color: #f8f9fa;
-  border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 0 C 15 15, 0 15, 0 15 L 0 0 Z' fill='none' stroke='%230056b3' stroke-width='1'/%3E%3Cpath d='M15 0 C 15 15, 30 15, 30 15 L 30 0 Z' fill='none' stroke='%230056b3' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 0 15, 0 15 L 0 30 Z' fill='none' stroke='%230056b3' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 30 15, 30 15 L 30 30 Z' fill='none' stroke='%230056b3' stroke-width='1'/%3E%3C/svg%3E");
+  background-color: var(--color-surface);
+  border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 0 C 15 15, 0 15, 0 15 L 0 0 Z' fill='none' stroke='%232563eb' stroke-width='1'/%3E%3Cpath d='M15 0 C 15 15, 30 15, 30 15 L 0 0 Z' fill='none' stroke='%232563eb' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 0 15, 0 15 L 0 30 Z' fill='none' stroke='%232563eb' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 30 15, 30 15 L 30 30 Z' fill='none' stroke='%232563eb' stroke-width='1'/%3E%3C/svg%3E");
 }
 
 /* Theme: Isha */
 .theme-isha .mushaf-page {
-  background-color: #1a1a1a;
-  border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 0 C 15 15, 0 15, 0 15 L 0 0 Z' fill='none' stroke='%23ffd700' stroke-width='1'/%3E%3Cpath d='M15 0 C 15 15, 30 15, 30 15 L 30 0 Z' fill='none' stroke='%23ffd700' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 0 15, 0 15 L 0 30 Z' fill='none' stroke='%23ffd700' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 30 15, 30 15 L 30 30 Z' fill='none' stroke='%23ffd700' stroke-width='1'/%3E%3C/svg%3E");
+  background-color: var(--color-surface);
+  border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 0 C 15 15, 0 15, 0 15 L 0 0 Z' fill='none' stroke='%23d97706' stroke-width='1'/%3E%3Cpath d='M15 0 C 15 15, 30 15, 30 15 L 0 0 Z' fill='none' stroke='%23d97706' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 0 15, 0 15 L 0 30 Z' fill='none' stroke='%23d97706' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 30 15, 30 15 L 30 30 Z' fill='none' stroke='%23d97706' stroke-width='1'/%3E%3C/svg%3E");
 }
 
 /* Theme: Duha */
 .theme-duha .mushaf-page {
-  background-color: #fdfaf6;
-  border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 0 C 15 15, 0 15, 0 15 L 0 0 Z' fill='none' stroke='%23B8860B' stroke-width='1'/%3E%3Cpath d='M15 0 C 15 15, 30 15, 30 15 L 30 0 Z' fill='none' stroke='%23B8860B' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 0 15, 0 15 L 0 30 Z' fill='none' stroke='%23B8860B' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 30 15, 30 15 L 30 30 Z' fill='none' stroke='%23B8860B' stroke-width='1'/%3E%3C/svg%3E");
+  background-color: var(--color-surface);
+  border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath d='M15 0 C 15 15, 0 15, 0 15 L 0 0 Z' fill='none' stroke='%232563eb' stroke-width='1'/%3E%3Cpath d='M15 0 C 15 15, 30 15, 30 15 L 0 0 Z' fill='none' stroke='%232563eb' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 0 15, 0 15 L 0 30 Z' fill='none' stroke='%232563eb' stroke-width='1'/%3E%3Cpath d='M15 30 C 15 15, 30 15, 30 15 L 30 30 Z' fill='none' stroke='%232563eb' stroke-width='1'/%3E%3C/svg%3E");
 }
 
 .mushaf-header, .mushaf-footer {
