@@ -5,6 +5,7 @@ import IndexItem from './IndexItem';
 import { BookOpenIcon, QueueListIcon, JuzOneIcon, PaperIcon } from './icons';
 import { safeLocalStorage } from '../utils/storage';
 import { formatSurahNameForDisplay } from '../utils/text';
+import { useSettingsContext } from '../contexts/SettingsContext';
 
 interface HomeViewProps {
   surahList: SurahReference[];
@@ -16,6 +17,13 @@ type ActiveTab = 'surahs' | 'juz' | 'hizbs' | 'pages';
 
 const HomeView: React.FC<HomeViewProps> = ({ surahList, juzList, hizbList }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('surahs');
+  const { setFontStyle, setSelectedEdition, setBrowsingMode } = useSettingsContext();
+
+  const enableUthmaniPageMode = () => {
+    setFontStyle('uthmani');
+    setSelectedEdition('quran-uthmani-quran-academy');
+    setBrowsingMode('page');
+  };
 
   const [lastRead] = useState(() => {
     try {
@@ -66,6 +74,7 @@ const HomeView: React.FC<HomeViewProps> = ({ surahList, juzList, hizbList }) => 
                     href={`#/page/${pageNumber}`}
                     onClick={(e) => {
                         e.preventDefault();
+                        enableUthmaniPageMode();
                         window.location.hash = `#/page/${pageNumber}`;
                     }}
                     className="flex items-center justify-center p-3 bg-surface rounded-md shadow-sm hover:shadow-md hover:bg-surface-hover hover:border-primary transition-all duration-200 cursor-pointer border border-border-subtle h-full"

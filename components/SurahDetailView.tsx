@@ -130,7 +130,16 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
   const prevHighlightAyahNumber = useRef<number | null>(null);
 
   // Consume Settings from Context
-  const { displayEdition, fontSize, fontStyle, browsingMode } = useSettingsContext();
+  const { displayEdition, fontSize, fontStyle, browsingMode, setFontStyle, setSelectedEdition, setBrowsingMode } = useSettingsContext();
+
+  // Enforce Uthmani page mode when navigating to a specific page
+  useEffect(() => {
+    if (forcedPageNumber && (browsingMode !== 'page' || fontStyle !== 'uthmani')) {
+      setFontStyle('uthmani');
+      setSelectedEdition('quran-uthmani-quran-academy');
+      setBrowsingMode('page');
+    }
+  }, [forcedPageNumber, browsingMode, fontStyle, setFontStyle, setSelectedEdition, setBrowsingMode]);
 
   // Determine current page logic
   const { ayahsByPage, firstPage, lastPage, getPageForAyahNumber } = useMemo(() => {

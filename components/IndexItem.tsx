@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatSurahNameForDisplay } from '../utils/text';
+import { useSettingsContext } from '../contexts/SettingsContext';
 
 interface IndexItemProps {
   type: 'الجزء' | 'الحزب';
@@ -10,8 +11,13 @@ interface IndexItemProps {
 }
 
 const IndexItem: React.FC<IndexItemProps> = ({ type, number, startSurah, startAyah, startSurahName }) => {
+  const { setFontStyle, setSelectedEdition, setBrowsingMode } = useSettingsContext();
+
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
+    setFontStyle('uthmani');
+    setSelectedEdition('quran-uthmani-quran-academy');
+    setBrowsingMode('page');
     const targetHash = e.currentTarget.getAttribute('href');
     if (targetHash) {
       window.location.hash = targetHash;
