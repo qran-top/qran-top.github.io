@@ -1,7 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import type { Ayah, QuranEdition } from '../types';
-import { PlayIcon, PauseIcon, ForwardIcon, BackwardIcon, XIcon, SpinnerIcon } from './icons';
+import { PlayIcon, PauseIcon, ForwardIcon, BackwardIcon, XIcon, SpinnerIcon, SpeakerWaveIcon } from './icons';
 import { formatSurahNameForDisplay } from '../utils/text';
+import RecitersModal from './RecitersModal';
 
 interface AudioPlayerBarProps {
     playlist: Ayah[];
@@ -19,6 +20,7 @@ interface AudioPlayerBarProps {
 const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ playlist, currentIndex, isPlaying, isLoading, onPlayPause, onNext, onPrev, onEnded, onClose, audioEdition }) => {
     const audioRef = useRef<HTMLAudioElement>(null);
     const currentAyah = playlist[currentIndex];
+    const [isRecitersModalOpen, setIsRecitersModalOpen] = useState(false);
 
     useEffect(() => {
         const audio = audioRef.current;
@@ -95,10 +97,20 @@ const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ playlist, currentIndex,
             <audio ref={audioRef} preload="auto" onError={handleAudioError} />
             <div className="max-w-4xl mx-auto p-3 flex items-center justify-between gap-4">
                 <div className="flex-grow min-w-0">
-                    <p className="font-bold text-text-primary truncate">
-                       { getTitle() }
-                    </p>
-                    <p className="text-sm text-text-muted">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        <button
+                            onClick={() => setIsRecitersModalOpen(true)}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-bold text-xs transition-colors cursor-pointer"
+                            title="تغيير القارئ (قائمة الأئمة)"
+                        >
+                            <SpeakerWaveIcon className="w-3.5 h-3.5" />
+                            <span>{audioEdition?.name || 'اختر القارئ'}</span>
+                        </button>
+                        <span className="text-text-primary font-bold text-sm truncate">
+                            سورة {getSurahName()}
+                        </span>
+                    </div>
+                    <p className="text-xs text-text-muted mt-0.5">
                        { !isLoading && `الآية ${currentAyah?.numberInSurah}` }
                     </p>
                 </div>
@@ -121,6 +133,11 @@ const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ playlist, currentIndex,
                     </button>
                 </div>
             </div>
+
+            <RecitersModal
+                isOpen={isRecitersModalOpen}
+                onClose={() => setIsRecitersModalOpen(false)}
+            />
         </div>
     );
 };

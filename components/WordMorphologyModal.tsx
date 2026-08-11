@@ -165,18 +165,30 @@ const WordMorphologyModal: React.FC<WordMorphologyModalProps> = ({
                 </div>
 
                 {/* Word & Root Card */}
-                <div className="flex items-center justify-between p-4 bg-surface-subtle rounded-2xl border border-primary/20 flex-shrink-0">
+                <div className="flex items-center justify-between p-4 bg-surface-subtle rounded-2xl border border-primary/20 flex-shrink-0 gap-3">
                     <div>
                         <div className="text-xs text-text-muted mb-1 font-semibold">المفردة القرآنية:</div>
-                        <span className="text-2xl font-bold font-quran-title text-primary">
+                        <span className="text-xl sm:text-2xl font-bold font-quran-title text-primary">
                             ﴿ {cleanWord} ﴾
                         </span>
                     </div>
-                    <div className="text-left">
+                    <div className="text-left flex flex-col items-end">
                         <div className="text-xs text-text-muted mb-1 font-semibold">الجذر اللغوي:</div>
-                        <span className="inline-block px-3 py-1 bg-primary/10 text-primary font-mono font-bold text-sm rounded-xl border border-primary/20 dir-ltr">
-                            {morphology?.root || '...'}
-                        </span>
+                        <button
+                            onClick={() => {
+                                const rawRoot = morphology?.root || '';
+                                const rootSearchTerm = rawRoot.replace(/[\s\-\u0640]/g, '').replace(/[\u0622\u0623\u0625\u0671]/g, 'ا').replace(/هـ/g, 'ه');
+                                if (rootSearchTerm) {
+                                    onSearchWord(rootSearchTerm);
+                                    onClose();
+                                }
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 hover:bg-primary/20 text-primary font-mono font-bold text-sm rounded-xl border border-primary/30 dir-ltr transition-colors cursor-pointer"
+                            title="بحث عن مواضع هذا الجذر اللغوي"
+                        >
+                            <SearchIcon className="w-3.5 h-3.5" />
+                            <span>{morphology?.root || '...'}</span>
+                        </button>
                     </div>
                 </div>
 
@@ -240,20 +252,38 @@ const WordMorphologyModal: React.FC<WordMorphologyModalProps> = ({
                 </div>
 
                 {/* Actions */}
-                <div className="pt-2 flex flex-col sm:flex-row items-center gap-2 flex-shrink-0">
-                    <button
-                        onClick={() => {
-                            onSearchWord(cleanWord);
-                            onClose();
-                        }}
-                        className="w-full py-3 px-4 rounded-xl bg-primary text-white font-bold text-xs sm:text-sm hover:bg-primary-hover shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                        <SearchIcon className="w-4 h-4" />
-                        <span>بحث عن جميع مواضع وتكرارات الكلمة</span>
-                    </button>
+                <div className="pt-2 flex flex-col gap-2 flex-shrink-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button
+                            onClick={() => {
+                                onSearchWord(cleanWord);
+                                onClose();
+                            }}
+                            className="w-full py-2.5 px-3 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary-hover shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                            <SearchIcon className="w-4 h-4" />
+                            <span>بحث بالكلمة ({cleanWord})</span>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                const rawRoot = morphology?.root || '';
+                                const rootSearchTerm = rawRoot.replace(/[\s\-\u0640]/g, '').replace(/[\u0622\u0623\u0625\u0671]/g, 'ا').replace(/هـ/g, 'ه');
+                                if (rootSearchTerm) {
+                                    onSearchWord(rootSearchTerm);
+                                    onClose();
+                                }
+                            }}
+                            className="w-full py-2.5 px-3 rounded-xl bg-surface-subtle border border-primary/40 text-primary font-bold text-xs hover:bg-primary/10 shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                            <SparklesIcon className="w-4 h-4" />
+                            <span>بحث بالجذر ({morphology?.root ? morphology.root.replace(/[\s-]/g, '') : '...'})</span>
+                        </button>
+                    </div>
+
                     <button
                         onClick={onClose}
-                        className="w-full sm:w-auto py-3 px-5 rounded-xl bg-surface-subtle border border-border-default font-semibold text-xs sm:text-sm hover:bg-surface-hover transition-colors cursor-pointer"
+                        className="w-full py-2 px-4 rounded-xl bg-surface-subtle border border-border-default font-semibold text-xs hover:bg-surface-hover transition-colors cursor-pointer text-text-muted hover:text-text-primary"
                     >
                         إغلاق
                     </button>
