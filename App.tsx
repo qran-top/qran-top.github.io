@@ -19,11 +19,7 @@ import SaveItemModal from './components/SaveItemModal';
 import UpdateNotification from './components/UpdateNotification';
 import { ArrowUpIcon, RefreshIcon, WifiOffIcon } from './components/icons';
 import Header from './components/Header';
-import { ALL_AUDIO_EDITIONS } from './data/audioEditions';
 import ExternalLinkModal from './components/ExternalLinkModal';
-
-
-const KHATMIYAH_AUDIO_PROGRESS_KEY = 'qran_khatmiyah_audio_progress';
 
 
 const App: React.FC = () => {
@@ -78,20 +74,6 @@ const App: React.FC = () => {
         };
         window.addEventListener('show-external-link-modal', handleShowModal);
         return () => window.removeEventListener('show-external-link-modal', handleShowModal);
-    }, []);
-    
-    const [audioKhatmiyahProgress, setAudioKhatmiyahProgress] = useState<{ ayahNumber: number } | null>(() => {
-        try {
-            const stored = safeLocalStorage.getItem(KHATMIYAH_AUDIO_PROGRESS_KEY);
-            if (stored) return JSON.parse(stored);
-        } catch (e) { console.error("Failed to parse audio khatmiyah progress", e); }
-        return { ayahNumber: 1 };
-    });
-    
-    const handleSaveAudioKhatmiyahProgress = useCallback((ayahNumber: number) => {
-        const newProgress = { ayahNumber };
-        setAudioKhatmiyahProgress(newProgress);
-        safeLocalStorage.setItem(KHATMIYAH_AUDIO_PROGRESS_KEY, JSON.stringify(newProgress));
     }, []);
     
     // --- UI Effects ---
@@ -161,10 +143,9 @@ const App: React.FC = () => {
         return map;
     }, [simpleSearchableAyahs]);
     
-    const isAudioKhatmiyahPage = currentPath.startsWith('#/audio-khatmiyah');
     const isPageWithToolbox = useMemo(() => 
-        (currentPath.startsWith('#/surah/') || currentPath.startsWith('#/search/') || currentPath.startsWith('#/page/')) && !isAudioKhatmiyahPage, 
-    [currentPath, isAudioKhatmiyahPage]);
+        currentPath.startsWith('#/surah/') || currentPath.startsWith('#/search/') || currentPath.startsWith('#/page/'), 
+    [currentPath]);
 
     const isSearchDataReady = simpleSearchableAyahs.length > 0;
 
@@ -228,19 +209,17 @@ const App: React.FC = () => {
                             setIsSidePanelOpen(false);
                         }}
                     />
-                    {!isAudioKhatmiyahPage && (
-                        <Header
-                            setIsSidePanelOpen={setIsSidePanelOpen}
-                            currentPath={currentPath}
-                            dataSourceStatus={dataSourceStatus}
-                            onSearch={handleSearch}
-                            searchDisabled={isInitialLoading || !isSearchDataReady}
-                            loadingEditions={loadingEditions}
-                            onStartPlayback={handleStartPlayback}
-                            isPlaybackLoading={!!playbackInfo?.trigger}
-                        />
-                    )}
-                    <main className={`pt-8 pb-24 ${isAudioKhatmiyahPage ? 'pt-0' : ''}`}>
+                    <Header
+                        setIsSidePanelOpen={setIsSidePanelOpen}
+                        currentPath={currentPath}
+                        dataSourceStatus={dataSourceStatus}
+                        onSearch={handleSearch}
+                        searchDisabled={isInitialLoading || !isSearchDataReady}
+                        loadingEditions={loadingEditions}
+                        onStartPlayback={handleStartPlayback}
+                        isPlaybackLoading={!!playbackInfo?.trigger}
+                    />
+                    <main className="pt-8 pb-24">
                         <AppRouter
                             pathParts={pathParts}
                             queryParams={queryParams}
@@ -248,8 +227,6 @@ const App: React.FC = () => {
                             quranData={quranData}
                             simpleSearchableAyahs={simpleSearchableAyahs}
                             collections={collections}
-                            audioKhatmiyahProgress={audioKhatmiyahProgress}
-                            handleSaveAudioKhatmiyahProgress={handleSaveAudioKhatmiyahProgress}
                             allQuranData={allQuranData}
                             fetchCustomEditionData={fetchCustomEditionData}
                             handleDeleteCollection={handleDeleteCollection}
@@ -276,14 +253,14 @@ const App: React.FC = () => {
                     />}
                     {itemToSave && <SaveItemModal item={itemToSave} collections={collections} onClose={() => setItemToSave(null)} onSave={handleConfirmSave} />}
                     {externalLinkUrl && <ExternalLinkModal url={externalLinkUrl} onClose={() => setExternalLinkUrl(null)} />}
-                    {playbackInfo && !isAudioKhatmiyahPage && <AudioPlayerBar 
+                    {playbackInfo && <AudioPlayerBar 
                         playlist={playbackInfo.playlist} currentIndex={playbackInfo.currentIndex}
                         isPlaying={playbackInfo.isPlaying} isLoading={!!playbackInfo?.trigger}
                         onPlayPause={handlePlayPause} onNext={handleNext} onPrev={handlePrev}
                         onEnded={handleNext} onClose={handleClosePlayback}
                         audioEdition={selectedAudioEditionDetails}
                     />}
-                    {showScroll && !isAudioKhatmiyahPage && (
+                    {showScroll && (
                         <button 
                             onClick={scrollToTop} 
                             className={`fixed left-4 sm:left-8 z-50 p-3.5 sm:p-4 bg-primary text-white rounded-full shadow-2xl hover:bg-primary-hover active:scale-95 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 cursor-pointer ${

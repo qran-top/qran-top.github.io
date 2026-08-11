@@ -6,7 +6,6 @@ import SurahDetailView from './SurahDetailView';
 import { SearchView } from './SearchView';
 import SettingsView from './SettingsView';
 import SavedView from './SavedView';
-import AudioKhatmiyahView from './AudioKhatmiyahView';
 import WordAnalysisView from './WordAnalysisView';
 import PrivacyPolicyView from './PrivacyPolicyView';
 import LoadingScreen from './LoadingScreen';
@@ -16,7 +15,6 @@ import HistoryView from './HistoryView';
 import { QURAN_INDEX } from '../quranIndex';
 import { JUZ_INDEX, HIZB_INDEX } from '../quranPartitions';
 import { useSettingsContext } from '../contexts/SettingsContext';
-import { ALL_AUDIO_EDITIONS } from '../data/audioEditions';
 
 interface AppRouterProps {
     pathParts: string[];
@@ -25,8 +23,6 @@ interface AppRouterProps {
     quranData: SurahData[] | undefined;
     simpleSearchableAyahs: Ayah[];
     collections: Collections;
-    audioKhatmiyahProgress: { ayahNumber: number } | null;
-    handleSaveAudioKhatmiyahProgress: (ayahNumber: number) => void;
     allQuranData: { [key: string]: SurahData[] } | null;
     fetchCustomEditionData: (id: string) => void;
     handleDeleteCollection: (id: string) => void;
@@ -50,7 +46,6 @@ interface AppRouterProps {
 const AppRouter: React.FC<AppRouterProps> = (props) => {
     const {
         pathParts, queryParams, isInitialLoading, quranData, simpleSearchableAyahs, collections,
-        audioKhatmiyahProgress, handleSaveAudioKhatmiyahProgress,
         allQuranData, fetchCustomEditionData,
         handleDeleteCollection, handleDeleteSavedItem, updateItemNotes, handleExportNotebook,
         handleImportNotebook, handleSearch, handleSaveItem,
@@ -60,7 +55,7 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
     } = props;
 
     // Use Context for AudioEditions and selections
-    const { activeEditions, selectedAudioEdition, setSelectedAudioEdition } = useSettingsContext();
+    const { selectedAudioEdition, setSelectedAudioEdition } = useSettingsContext();
 
     // Prepare route info for memoized computations at top level (Rules of Hooks)
     const isSearchPage = pathParts[0] === 'search';
@@ -80,20 +75,6 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
     }, [performSearch, isSearchPage, isSearchNumber, searchQueryVal, isRootSearchVal]);
 
     if (isInitialLoading) return <LoadingScreen />;
-    if (pathParts[0] === 'audio-khatmiyah') {
-        return <AudioKhatmiyahView
-            allAyahs={simpleSearchableAyahs}
-            allAudioEditions={ALL_AUDIO_EDITIONS}
-            initialAyahNumber={audioKhatmiyahProgress?.ayahNumber || 1}
-            onSaveProgress={handleSaveAudioKhatmiyahProgress}
-            selectedAudioEdition={selectedAudioEdition}
-            onAudioEditionChange={setSelectedAudioEdition}
-            allQuranData={allQuranData}
-            fetchCustomEditionData={fetchCustomEditionData}
-            activeEditions={activeEditions}
-            setIsSidePanelOpen={setIsSidePanelOpen}
-        />;
-    }
     if (pathParts[0] === 'saved') return <SavedView collections={collections} collectionId={pathParts[1] || null} onDeleteCollection={handleDeleteCollection} onDeleteSavedItem={handleDeleteSavedItem} onUpdateNotes={updateItemNotes} />;
     if (pathParts[0] === 'history') return <HistoryView surahList={QURAN_INDEX} />;
     if (pathParts[0] === 'analysis') return <WordAnalysisView simpleCleanData={allQuranData?.['quran-simple-clean'] || []} initialWord={pathParts[1] ? decodeURIComponent(pathParts[1]) : undefined} />;
