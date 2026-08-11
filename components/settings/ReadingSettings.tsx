@@ -19,14 +19,184 @@ const FONT_STYLES: { id: FontStyleType; name: string; description: string; class
 ];
 
 const ReadingSettings: React.FC = () => {
-    const { fontSize, setFontSize, fontStyle, setFontStyle, browsingMode, setBrowsingMode, selectedEdition, setSelectedEdition } = useSettingsContext();
+    const { 
+        fontSize, setFontSize, 
+        fontStyle, setFontStyle, 
+        browsingMode, setBrowsingMode, 
+        selectedEdition, setSelectedEdition,
+        enableTajweed, setEnableTajweed,
+        enableWordAudio, setEnableWordAudio,
+        wordClickBehavior, setWordClickBehavior,
+        enableMorphology, setEnableMorphology
+    } = useSettingsContext();
 
     return (
         <div className="animate-fade-in space-y-8">
             <div>
                 <h2 className="text-2xl font-bold text-text-primary mb-1">إعدادات القراءة والخطوط</h2>
-                <p className="text-sm text-text-secondary">خصص نمط خط المصحف وحجمه وطريقة التصفح بما يحقق أقصى درجات الراحة لعينيك.</p>
+                <p className="text-sm text-text-secondary">خصص نمط خط المصحف وحجمه وطريقة التصفح والتفاعل مع المفردات بما يضمن أقصى أداء وراحة لعينيك.</p>
             </div>
+
+            {/* Word Click Behavior Section */}
+            <div className="p-6 bg-surface-subtle rounded-2xl border border-primary/20 space-y-4">
+                <div>
+                    <h3 className="font-bold text-lg text-text-primary">سلوك الضغط والنقر على الكلمة</h3>
+                    <p className="text-xs text-text-muted">حدد النتيجة المفضلة لديك عند الضغط على أي كلمة داخل الآية الكريمة</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setWordClickBehavior('auto')}
+                        className={`p-4 rounded-xl border text-right transition-all flex flex-col justify-between ${
+                            wordClickBehavior === 'auto'
+                                ? 'bg-surface border-primary ring-2 ring-primary/20 shadow-xs'
+                                : 'bg-surface border-border-default hover:border-primary/30'
+                        }`}
+                    >
+                        <div>
+                            <div className="font-bold text-text-primary text-base flex items-center gap-1.5">
+                                ⚡ <span>تلقائي (حسب الخط)</span>
+                            </div>
+                            <div className="text-xs text-text-muted mt-2 leading-relaxed">
+                                الإملائي 1 = بحث مباشر فوراً.<br/>
+                                الإملائي 2 والعثماني = قائمة الخيارات.
+                            </div>
+                        </div>
+                        {wordClickBehavior === 'auto' && (
+                            <span className="mt-3 text-xs text-primary font-bold flex items-center gap-1">
+                                <CheckIcon className="w-4 h-4" /> مُفعل
+                            </span>
+                        )}
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setWordClickBehavior('direct_search')}
+                        className={`p-4 rounded-xl border text-right transition-all flex flex-col justify-between ${
+                            wordClickBehavior === 'direct_search'
+                                ? 'bg-surface border-primary ring-2 ring-primary/20 shadow-xs'
+                                : 'bg-surface border-border-default hover:border-primary/30'
+                        }`}
+                    >
+                        <div>
+                            <div className="font-bold text-text-primary text-base flex items-center gap-1.5">
+                                🔍 <span>بحث مباشر فوراً</span>
+                            </div>
+                            <div className="text-xs text-text-muted mt-2 leading-relaxed">
+                                إجراء بحث المثاني وتكرارات الكلمة فور الضغط عليها في جميع الأوضاع.
+                            </div>
+                        </div>
+                        {wordClickBehavior === 'direct_search' && (
+                            <span className="mt-3 text-xs text-primary font-bold flex items-center gap-1">
+                                <CheckIcon className="w-4 h-4" /> مُفعل
+                            </span>
+                        )}
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setWordClickBehavior('show_menu')}
+                        className={`p-4 rounded-xl border text-right transition-all flex flex-col justify-between ${
+                            wordClickBehavior === 'show_menu'
+                                ? 'bg-surface border-primary ring-2 ring-primary/20 shadow-xs'
+                                : 'bg-surface border-border-default hover:border-primary/30'
+                        }`}
+                    >
+                        <div>
+                            <div className="font-bold text-text-primary text-base flex items-center gap-1.5">
+                                📋 <span>إظهار قائمة خيارات الكلمة</span>
+                            </div>
+                            <div className="text-xs text-text-muted mt-2 leading-relaxed">
+                                إظهار قائمة منبثقة تتيح الاختيار بين (البحث، الإعراب، الاستماع الصوتية).
+                            </div>
+                        </div>
+                        {wordClickBehavior === 'show_menu' && (
+                            <span className="mt-3 text-xs text-primary font-bold flex items-center gap-1">
+                                <CheckIcon className="w-4 h-4" /> مُفعل
+                            </span>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Quran.com API v4 Features Options */}
+            <div className="p-6 bg-surface-subtle rounded-2xl border border-border-default space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-bold uppercase tracking-wider text-primary bg-primary/10 px-3 py-1 rounded-full">
+                        ميزات التفاعل اللغوي واللفظي
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Tajweed Mode Toggle */}
+                    <div className={`p-4 rounded-xl border transition-all flex items-start justify-between cursor-pointer ${
+                        enableTajweed ? 'bg-surface border-primary ring-2 ring-primary/20 shadow-xs' : 'bg-surface border-border-default'
+                    }`}
+                    onClick={() => setEnableTajweed(!enableTajweed)}
+                    >
+                        <div className="space-y-1">
+                            <div className="font-bold text-text-primary text-base flex items-center gap-2">
+                                🎨 <span>التجويد الملون</span>
+                            </div>
+                            <p className="text-xs text-text-muted leading-relaxed">
+                                تظليل أحكام التجويد بألوان مميزة.
+                            </p>
+                        </div>
+                        <input 
+                            type="checkbox" 
+                            checked={enableTajweed} 
+                            onChange={() => {}} 
+                            className="mt-1 h-5 w-5 accent-primary rounded cursor-pointer flex-shrink-0" 
+                        />
+                    </div>
+
+                    {/* Word Audio Pronunciation Toggle */}
+                    <div className={`p-4 rounded-xl border transition-all flex items-start justify-between cursor-pointer ${
+                        enableWordAudio ? 'bg-surface border-primary ring-2 ring-primary/20 shadow-xs' : 'bg-surface border-border-default'
+                    }`}
+                    onClick={() => setEnableWordAudio(!enableWordAudio)}
+                    >
+                        <div className="space-y-1">
+                            <div className="font-bold text-text-primary text-base flex items-center gap-2">
+                                🔊 <span>نطق الكلمة المرتل</span>
+                            </div>
+                            <p className="text-xs text-text-muted leading-relaxed">
+                                نطق نبرة الكلمة عند ضغطها.
+                            </p>
+                        </div>
+                        <input 
+                            type="checkbox" 
+                            checked={enableWordAudio} 
+                            onChange={() => {}} 
+                            className="mt-1 h-5 w-5 accent-primary rounded cursor-pointer flex-shrink-0" 
+                        />
+                    </div>
+
+                    {/* Word Morphology & Grammar Toggle */}
+                    <div className={`p-4 rounded-xl border transition-all flex items-start justify-between cursor-pointer ${
+                        enableMorphology ? 'bg-surface border-primary ring-2 ring-primary/20 shadow-xs' : 'bg-surface border-border-default'
+                    }`}
+                    onClick={() => setEnableMorphology(!enableMorphology)}
+                    >
+                        <div className="space-y-1">
+                            <div className="font-bold text-text-primary text-base flex items-center gap-2">
+                                📐 <span>التحليل الصرفي والإعراب</span>
+                            </div>
+                            <p className="text-xs text-text-muted leading-relaxed">
+                                عرض الجذر، الإعراب، والنوع اللغوي.
+                            </p>
+                        </div>
+                        <input 
+                            type="checkbox" 
+                            checked={enableMorphology} 
+                            onChange={() => {}} 
+                            className="mt-1 h-5 w-5 accent-primary rounded cursor-pointer flex-shrink-0" 
+                        />
+                    </div>
+                </div>
+            </div>
+
 
             {/* Live Preview Box */}
             <div className="p-6 bg-surface-subtle border border-border-default rounded-2xl shadow-xs">

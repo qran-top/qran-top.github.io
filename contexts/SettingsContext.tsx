@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import type { FontSize, FontStyleType, BrowsingMode, QuranEdition } from '../types';
+import type { FontSize, FontStyleType, BrowsingMode, QuranEdition, WordClickBehavior } from '../types';
 
 interface SettingsContextType {
     fontSize: FontSize;
@@ -13,6 +13,14 @@ interface SettingsContextType {
     setSelectedEdition: (id: string) => void;
     selectedAudioEdition: string;
     setSelectedAudioEdition: (id: string) => void;
+    enableTajweed: boolean;
+    setEnableTajweed: (enabled: boolean) => void;
+    enableWordAudio: boolean;
+    setEnableWordAudio: (enabled: boolean) => void;
+    wordClickBehavior: WordClickBehavior;
+    setWordClickBehavior: (behavior: WordClickBehavior) => void;
+    enableMorphology: boolean;
+    setEnableMorphology: (enabled: boolean) => void;
     displayEdition: QuranEdition;
 }
 

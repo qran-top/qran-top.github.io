@@ -467,5 +467,94 @@ html.dark .animate-highlight-pulse {
   to { transform: rotate(360deg); }
 }
 
-/* This file is intentionally blank. */
-/* It exists to prevent a 404 error that might appear in some development environments. */
+/* --- TAJWEED COLOR CODING RULES (Quran.com API v4 Tajweed markup) --- */
+.quran-tajweed {
+  line-height: 2.2;
+}
+
+.quran-tajweed tajweed {
+  display: inline;
+}
+
+.quran-tajweed tajweed[class*="ham_wasl"],
+.quran-tajweed tajweed[class*="laam_shamsiyah"],
+.quran-tajweed tajweed[class*="slnt"],
+.quran-tajweed tajweed[class*="silent"],
+.quran-tajweed .ham_wasl,
+.quran-tajweed .laam_shamsiyah,
+.quran-tajweed .slnt { color: #9E9E9E; }
+
+.quran-tajweed tajweed[class*="madd"],
+.quran-tajweed tajweed[class*="madda"],
+.quran-tajweed .madd_normal,
+.quran-tajweed .madd_permiss,
+.quran-tajweed .madd_necessary,
+.quran-tajweed .madda_normal,
+.quran-tajweed .madda_permissible,
+.quran-tajweed .madda_necessary,
+.quran-tajweed .madda_obligatory { color: #D32F2F !important; font-weight: 700; }
+
+.quran-tajweed tajweed[class*="ghunnah"],
+.quran-tajweed .ghunnah { color: #F57C00 !important; font-weight: 700; }
+
+.quran-tajweed tajweed[class*="idgham"],
+.quran-tajweed .idgham_w_ghunnah,
+.quran-tajweed .idgham_wo_ghunnah,
+.quran-tajweed .idgham_mutajanisain,
+.quran-tajweed .idgham_shafawi { color: #00897B !important; font-weight: 700; }
+
+.quran-tajweed tajweed[class*="ikhfa"],
+.quran-tajweed tajweed[class*="ikhafa"],
+.quran-tajweed .ikhfa,
+.quran-tajweed .ikhafa,
+.quran-tajweed .ikhfa_shafawi { color: #1976D2 !important; font-weight: 700; }
+
+.quran-tajweed tajweed[class*="iqlab"],
+.quran-tajweed .iqlab { color: #8E24AA !important; font-weight: 700; }
+
+.quran-tajweed tajweed[class*="qalqalah"],
+.quran-tajweed tajweed[class*="qalaqalah"],
+.quran-tajweed .qalqalah,
+.quran-tajweed .qalaqalah { color: #388E3C !important; font-weight: 700; }
+
+.dark .quran-tajweed tajweed[class*="ham_wasl"],
+.dark .quran-tajweed tajweed[class*="laam_shamsiyah"],
+.dark .quran-tajweed tajweed[class*="slnt"],
+.dark .quran-tajweed tajweed[class*="silent"],
+.dark .quran-tajweed .ham_wasl,
+.dark .quran-tajweed .laam_shamsiyah,
+.dark .quran-tajweed .slnt { color: #78909C; }
+
+.dark .quran-tajweed tajweed[class*="madd"],
+.dark .quran-tajweed tajweed[class*="madda"],
+.dark .quran-tajweed .madd_normal,
+.dark .quran-tajweed .madd_permiss,
+.dark .quran-tajweed .madd_necessary,
+.dark .quran-tajweed .madda_normal,
+.dark .quran-tajweed .madda_permissible,
+.dark .quran-tajweed .madda_necessary,
+.dark .quran-tajweed .madda_obligatory { color: #FF5252 !important; font-weight: 700; }
+
+.dark .quran-tajweed tajweed[class*="ghunnah"],
+.dark .quran-tajweed .ghunnah { color: #FFB74D !important; font-weight: 700; }
+
+.dark .quran-tajweed tajweed[class*="idgham"],
+.dark .quran-tajweed .idgham_w_ghunnah,
+.dark .quran-tajweed .idgham_wo_ghunnah,
+.dark .quran-tajweed .idgham_mutajanisain,
+.dark .quran-tajweed .idgham_shafawi { color: #26A69A !important; font-weight: 700; }
+
+.dark .quran-tajweed tajweed[class*="ikhfa"],
+.dark .quran-tajweed tajweed[class*="ikhafa"],
+.dark .quran-tajweed .ikhfa,
+.dark .quran-tajweed .ikhafa,
+.dark .quran-tajweed .ikhfa_shafawi { color: #64B5F6 !important; font-weight: 700; }
+
+.dark .quran-tajweed tajweed[class*="iqlab"],
+.dark .quran-tajweed .iqlab { color: #E040FB !important; font-weight: 700; }
+
+.dark .quran-tajweed tajweed[class*="qalqalah"],
+.dark .quran-tajweed tajweed[class*="qalaqalah"],
+.dark .quran-tajweed .qalqalah,
+.dark .quran-tajweed .qalaqalah { color: #69F0AE !important; font-weight: 700; }
+

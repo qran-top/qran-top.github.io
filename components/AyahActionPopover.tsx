@@ -1,7 +1,7 @@
 import React, { useRef, useState, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { Ayah } from '../types';
-import { BookmarkIcon, CopyIcon, CheckIcon } from './icons';
+import { BookmarkIcon, CopyIcon, CheckIcon, PlayIcon, SpeakerWaveIcon } from './icons';
 
 const AyahActionPopover: React.FC<{
     activePopover: { ayah: Ayah; triggerElement: HTMLElement };
@@ -13,7 +13,7 @@ const AyahActionPopover: React.FC<{
     onPlayFrom?: (ayah: Ayah) => void;
     onSaveStop?: (ayah: Ayah) => void;
     copiedAyah: number | null;
-}> = ({ activePopover, onClose, onSave, onCopy, copiedAyah }) => {
+}> = ({ activePopover, onClose, onSave, onCopy, onPlayFrom, copiedAyah }) => {
     
     const popoverRef = useRef<HTMLDivElement>(null);
     const [style, setStyle] = useState<React.CSSProperties>({ opacity: 0, pointerEvents: 'none' });
@@ -55,17 +55,30 @@ const AyahActionPopover: React.FC<{
         <div 
             ref={popoverRef} 
             style={style}
-            className="popover-content w-max p-1 bg-surface rounded-full shadow-lg border border-border-default flex items-center gap-1 z-50 animate-fade-in"
+            className="popover-content w-max p-1.5 bg-surface rounded-2xl shadow-xl border border-primary/20 flex items-center gap-1 z-50 animate-fade-in"
             role="dialog"
             aria-label="إجراءات الآية"
         >
-            <button onClick={() => { onCopy(activePopover.ayah); }} className="p-2.5 rounded-full text-text-subtle hover:bg-surface-hover hover:text-primary transition-colors flex items-center gap-1" title="نسخ الآية مع المرجع">
-              {copiedAyah === activePopover.ayah.number ? <CheckIcon className="w-5 h-5 text-green-500" /> : <CopyIcon className="w-5 h-5" />}
+            {onPlayFrom && (
+                <>
+                    <button 
+                        onClick={() => { onPlayFrom(activePopover.ayah); onClose(); }} 
+                        className="p-2.5 rounded-xl text-text-subtle hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1.5 cursor-pointer" 
+                        title="استمرار التلاوة من هذه الآية"
+                    >
+                        <PlayIcon className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-bold">تلاوة مستمرة</span>
+                    </button>
+                    <div className="w-px h-5 bg-border-default"></div>
+                </>
+            )}
+            <button onClick={() => { onCopy(activePopover.ayah); }} className="p-2.5 rounded-xl text-text-subtle hover:bg-surface-hover hover:text-primary transition-colors flex items-center gap-1 cursor-pointer" title="نسخ الآية مع المرجع">
+              {copiedAyah === activePopover.ayah.number ? <CheckIcon className="w-4 h-4 text-green-500" /> : <CopyIcon className="w-4 h-4" />}
               <span className="text-xs font-semibold px-1">نسخ</span>
             </button>
             <div className="w-px h-5 bg-border-default"></div>
-            <button onClick={() => { onSave(activePopover.ayah); }} className="p-2.5 rounded-full text-text-subtle hover:bg-surface-hover hover:text-primary transition-colors flex items-center gap-1" title="حفظ الآية في دفتر التدبر">
-              <BookmarkIcon className="w-5 h-5 text-primary" />
+            <button onClick={() => { onSave(activePopover.ayah); }} className="p-2.5 rounded-xl text-text-subtle hover:bg-surface-hover hover:text-primary transition-colors flex items-center gap-1 cursor-pointer" title="حفظ الآية في دفتر التدبر">
+              <BookmarkIcon className="w-4 h-4 text-primary" />
               <span className="text-xs font-semibold px-1">حفظ في الدفتر</span>
             </button>
         </div>,
@@ -74,3 +87,4 @@ const AyahActionPopover: React.FC<{
 };
 
 export default AyahActionPopover;
+

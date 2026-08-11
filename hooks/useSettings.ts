@@ -1,11 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { QuranEdition, QuranFont, FontSize, BrowsingMode, FontStyleType } from '../types';
+import type { QuranEdition, QuranFont, FontSize, BrowsingMode, FontStyleType, WordClickBehavior } from '../types';
 
 const QURAN_EDITION_KEY = 'qran_app_edition';
 const FONT_SIZE_KEY = 'qran_app_font_size';
 const FONT_STYLE_KEY = 'qran_app_font_style';
 const AUDIO_EDITION_KEY = 'qran_app_audio_edition';
 const BROWSING_MODE_KEY = 'qran_app_browsing_mode';
+const TAJWEED_MODE_KEY = 'qran_app_enable_tajweed';
+const WORD_AUDIO_KEY = 'qran_app_enable_word_audio';
+const WORD_CLICK_BEHAVIOR_KEY = 'qran_app_word_click_behavior';
+const ENABLE_MORPHOLOGY_KEY = 'qran_app_enable_morphology';
 
 const DEFAULT_EDITIONS: QuranEdition[] = [
     { identifier: "quran-simple-clean", language: "ar", name: "المصحف المبسط", englishName: "Simple Clean", format: "text", type: "quran", direction: "rtl", sourceApi: "alquran.cloud" },
@@ -52,11 +56,31 @@ export const useSettings = () => {
         () => safeGetItem(AUDIO_EDITION_KEY, 'ar.muhammadayyoub')
     );
 
+    const [enableTajweed, setEnableTajweed] = useState<boolean>(
+        () => safeGetItem(TAJWEED_MODE_KEY, 'false') === 'true'
+    );
+
+    const [enableWordAudio, setEnableWordAudio] = useState<boolean>(
+        () => safeGetItem(WORD_AUDIO_KEY, 'true') === 'true'
+    );
+
+    const [wordClickBehavior, setWordClickBehavior] = useState<WordClickBehavior>(
+        () => safeGetItem(WORD_CLICK_BEHAVIOR_KEY, 'auto') as WordClickBehavior
+    );
+
+    const [enableMorphology, setEnableMorphology] = useState<boolean>(
+        () => safeGetItem(ENABLE_MORPHOLOGY_KEY, 'true') === 'true'
+    );
+
     useEffect(() => { safeSetItem(QURAN_EDITION_KEY, selectedEdition); }, [selectedEdition]);
     useEffect(() => { safeSetItem(FONT_SIZE_KEY, fontSize); }, [fontSize]);
     useEffect(() => { safeSetItem(FONT_STYLE_KEY, fontStyle); }, [fontStyle]);
     useEffect(() => { safeSetItem(BROWSING_MODE_KEY, browsingMode); }, [browsingMode]);
     useEffect(() => { safeSetItem(AUDIO_EDITION_KEY, selectedAudioEdition); }, [selectedAudioEdition]);
+    useEffect(() => { safeSetItem(TAJWEED_MODE_KEY, String(enableTajweed)); }, [enableTajweed]);
+    useEffect(() => { safeSetItem(WORD_AUDIO_KEY, String(enableWordAudio)); }, [enableWordAudio]);
+    useEffect(() => { safeSetItem(WORD_CLICK_BEHAVIOR_KEY, wordClickBehavior); }, [wordClickBehavior]);
+    useEffect(() => { safeSetItem(ENABLE_MORPHOLOGY_KEY, String(enableMorphology)); }, [enableMorphology]);
 
     const displayEdition = useMemo(() => {
         const found = activeEditions.find(e => e.identifier === selectedEdition) || DEFAULT_EDITIONS[0];
@@ -73,6 +97,10 @@ export const useSettings = () => {
         activeEditions,
         selectedEdition, setSelectedEdition,
         selectedAudioEdition, setSelectedAudioEdition,
+        enableTajweed, setEnableTajweed,
+        enableWordAudio, setEnableWordAudio,
+        wordClickBehavior, setWordClickBehavior,
+        enableMorphology, setEnableMorphology,
         displayEdition
     };
 };

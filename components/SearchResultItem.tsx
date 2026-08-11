@@ -1,8 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { Ayah, SurahData, QuranEdition, FontSize, FontStyleType } from '../types';
 import { SparklesIcon, BookmarkIcon, CopyIcon, CheckIcon } from './icons';
 import { normalizeArabicText } from '../utils/text';
 import { getQuranTextStyle } from '../utils/font';
+import { useSettingsContext } from '../contexts/SettingsContext';
+import WordActionPopover from './WordActionPopover';
+import WordMorphologyModal from './WordMorphologyModal';
 
 interface SearchResultItemProps {
   ayah: Ayah;
@@ -19,7 +22,7 @@ interface SearchResultItemProps {
   pulsingWordIndex: number;
   resultIndex: number;
   simpleAyahText: string;
-  onUthmaniWordClick: (event: React.MouseEvent<HTMLButtonElement>, resultIndex: number, simpleAyahText: string) => void;
+  onUthmaniWordClick?: (event: React.MouseEvent<HTMLButtonElement>, resultIndex: number, simpleAyahText: string) => void;
   onSaveAyah?: (ayah: Ayah) => void;
   onCopyAyah?: (ayah: Ayah) => void;
   copiedAyah?: number | null;
@@ -67,6 +70,23 @@ const getSurahMuqattaat = (surahNumber?: number): string | null => {
     fontSize, fontStyle, searchType, isCurrentlyPlaying, itemRef, pulsingWordIndex,
     resultIndex, simpleAyahText, onUthmaniWordClick, onSaveAyah, onCopyAyah, copiedAyah
 }) => {
+    const { wordClickBehavior, enableWordAudio, enableMorphology } = useSettingsContext();
+
+    const [activeWordPopover, setActiveWordPopover] = useState<{
+        word: string;
+        surahNumber: number;
+        surahName?: string;
+        ayahNumberInSurah: number;
+        wordIndex: number;
+        triggerElement: HTMLElement;
+    } | null>(null);
+
+    const [activeMorphologyModal, setActiveMorphologyModal] = useState<{
+        word: string;
+        surahNumber: number;
+        surahName?: string;
+        ayahNumberInSurah: number;
+    } | null>(null);
 
     const displayAyah = useMemo(() => {
         if (displayEditionData?.length > 0 && ayah.surah) {
@@ -89,6 +109,48 @@ const getSurahMuqattaat = (surahNumber?: number): string | null => {
     }, [ayah, displayEditionData]);
 
     const { className: quranTextClass } = getQuranTextStyle(fontStyle, fontSize);
+
+    const playWordAudio = (surahNum: number, ayahNum: number, wordIdxOneBased: number) => {
+        try {
+            const surahPadded = String(surahNum).padStart(3, '0');
+            const ayahPadded = String(ayahNum).padStart(3, '0');
+            const wordPadded = String(wordIdxOneBased).padStart(3, '0');
+            const audioUrl = `https://audio.qurancdn.com/wbw/${surahPadded}_${ayahPadded}_${wordPadded}.mp3`;
+            const audio = new Audio(audioUrl);
+            audio.play().catch(() => {});
+        } catch (e) {}
+    };
+
+    const handleWordClick = (e: React.MouseEvent<HTMLButtonElement>, rawWord: string, wordIndex: number) => {
+        e.stopPropagation();
+        const cleanWord = rawWord
+            .replace(/<[^>]*>/g, '')
+            .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '')
+            .trim();
+
+        if (!displayAyah.surah) return;
+
+        const isImlaei1 = fontStyle === 'imlai_1' || displayEdition.identifier.includes('simple-clean');
+        const shouldSearchDirectly = 
+            wordClickBehavior === 'direct_search' || 
+            (wordClickBehavior === 'auto' && isImlaei1);
+
+        if (shouldSearchDirectly) {
+            if (enableWordAudio) {
+                playWordAudio(displayAyah.surah.number, displayAyah.numberInSurah, wordIndex + 1);
+            }
+            onNewSearch(cleanWord, 'quran-simple-clean', { surah: displayAyah.surah.number, ayah: displayAyah.numberInSurah, wordIndex });
+        } else {
+            setActiveWordPopover({
+                word: cleanWord,
+                surahNumber: displayAyah.surah.number,
+                surahName: displayAyah.surah.name,
+                ayahNumberInSurah: displayAyah.numberInSurah,
+                wordIndex,
+                triggerElement: e.currentTarget
+            });
+        }
+    };
 
     const renderAyahWithHighlight = () => {
         if (displayEdition.format === 'audio') {
@@ -116,18 +178,7 @@ const getSurahMuqattaat = (surahNumber?: number): string | null => {
                     <button 
                         type="button" 
                         key={index} 
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (isImlaei) {
-                                if (word && ayah.surah) {
-                                    onNewSearch(word, 'quran-simple-clean', { surah: ayah.surah.number, ayah: ayah.numberInSurah, wordIndex: index });
-                                }
-                            } else {
-                                if (simpleAyahText) {
-                                    onUthmaniWordClick(e, resultIndex, simpleAyahText);
-                                }
-                            }
-                        }} 
+                        onClick={(e) => handleWordClick(e, word, index)} 
                         className="word-trigger bg-transparent border-none p-0 font-inherit cursor-pointer hover:bg-primary/10 rounded-md px-1 transition-colors"
                         aria-label={`إظهار خيارات البحث لكلمة: ${word}`}
                     >
@@ -143,18 +194,7 @@ const getSurahMuqattaat = (surahNumber?: number): string | null => {
                 <button
                     type="button"
                     key={index}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (isImlaei) {
-                            if (word && ayah.surah) {
-                                onNewSearch(word, 'quran-simple-clean', { surah: ayah.surah.number, ayah: ayah.numberInSurah, wordIndex: index });
-                            }
-                        } else {
-                            if (simpleAyahText) {
-                                onUthmaniWordClick(e, resultIndex, simpleAyahText);
-                            }
-                        }
-                    }}
+                    onClick={(e) => handleWordClick(e, word, index)}
                     className="word-trigger bg-transparent border-none p-0 font-inherit cursor-pointer hover:bg-primary/10 rounded-md px-1 transition-colors"
                     aria-label={`إظهار خيارات البحث لكلمة: ${word}`}
                 >
@@ -236,6 +276,64 @@ const getSurahMuqattaat = (surahNumber?: number): string | null => {
             >
                {renderAyahWithHighlight()}
             </p>
+
+            {activeWordPopover && (
+                <WordActionPopover
+                    word={activeWordPopover.word}
+                    surahNumber={activeWordPopover.surahNumber}
+                    surahName={activeWordPopover.surahName}
+                    ayahNumberInSurah={activeWordPopover.ayahNumberInSurah}
+                    wordIndex={activeWordPopover.wordIndex}
+                    triggerElement={activeWordPopover.triggerElement}
+                    enableWordAudio={enableWordAudio}
+                    enableMorphology={enableMorphology}
+                    onClose={() => setActiveWordPopover(null)}
+                    onSearchWord={(cleanWord) => {
+                        if (displayAyah.surah) {
+                            onNewSearch(cleanWord, 'quran-simple-clean', {
+                                surah: displayAyah.surah.number,
+                                ayah: displayAyah.numberInSurah,
+                                wordIndex: activeWordPopover.wordIndex
+                            });
+                        }
+                    }}
+                    onPlayAudio={() => {
+                        playWordAudio(
+                            activeWordPopover.surahNumber,
+                            activeWordPopover.ayahNumberInSurah,
+                            activeWordPopover.wordIndex + 1
+                        );
+                    }}
+                    onOpenMorphology={() => {
+                        setActiveMorphologyModal({
+                            word: activeWordPopover.word,
+                            surahNumber: activeWordPopover.surahNumber,
+                            surahName: activeWordPopover.surahName,
+                            ayahNumberInSurah: activeWordPopover.ayahNumberInSurah
+                        });
+                        setActiveWordPopover(null);
+                    }}
+                />
+            )}
+
+            {activeMorphologyModal && (
+                <WordMorphologyModal
+                    word={activeMorphologyModal.word}
+                    surahNumber={activeMorphologyModal.surahNumber}
+                    surahName={activeMorphologyModal.surahName}
+                    ayahNumberInSurah={activeMorphologyModal.ayahNumberInSurah}
+                    onClose={() => setActiveMorphologyModal(null)}
+                    onSearchWord={(cleanWord) => {
+                        if (displayAyah.surah) {
+                            onNewSearch(cleanWord, 'quran-simple-clean', {
+                                surah: displayAyah.surah.number,
+                                ayah: displayAyah.numberInSurah,
+                                wordIndex: 0
+                            });
+                        }
+                    }}
+                />
+            )}
         </li>
     );
 };
