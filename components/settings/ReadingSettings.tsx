@@ -144,9 +144,12 @@ const ReadingSettings: React.FC = () => {
                             </p>
                         </div>
                         <input 
+                            id="enable-tajweed-checkbox"
+                            name="enableTajweed"
                             type="checkbox" 
                             checked={enableTajweed} 
                             onChange={() => {}} 
+                            aria-label="التجويد الملون"
                             className="mt-1 h-5 w-5 accent-primary rounded cursor-pointer flex-shrink-0" 
                         />
                     </div>
@@ -166,9 +169,12 @@ const ReadingSettings: React.FC = () => {
                             </p>
                         </div>
                         <input 
+                            id="enable-word-audio-checkbox"
+                            name="enableWordAudio"
                             type="checkbox" 
                             checked={enableWordAudio} 
                             onChange={() => {}} 
+                            aria-label="نطق الكلمة المرتل"
                             className="mt-1 h-5 w-5 accent-primary rounded cursor-pointer flex-shrink-0" 
                         />
                     </div>
@@ -188,9 +194,12 @@ const ReadingSettings: React.FC = () => {
                             </p>
                         </div>
                         <input 
+                            id="enable-morphology-checkbox"
+                            name="enableMorphology"
                             type="checkbox" 
                             checked={enableMorphology} 
                             onChange={() => {}} 
+                            aria-label="التحليل الصرفي والإعراب"
                             className="mt-1 h-5 w-5 accent-primary rounded cursor-pointer flex-shrink-0" 
                         />
                     </div>

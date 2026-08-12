@@ -72,6 +72,9 @@ const SurahPickerModal: React.FC<SurahPickerModalProps> = ({ isOpen, onClose, on
                     <div className="relative">
                         <SearchIcon className="w-4 h-4 text-text-muted absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         <input
+                            id="surah-picker-search-input"
+                            name="surahPickerSearch"
+                            aria-label="البحث عن سورة"
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}

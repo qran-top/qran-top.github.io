@@ -52,6 +52,8 @@ const ExportFormatSettings: React.FC = () => {
                 <div className="p-5 bg-surface-subtle rounded-lg border border-border-default">
                     <h3 className="text-xl font-semibold mb-3 text-text-primary">محرر القالب</h3>
                     <textarea
+                        id="export-template-editor"
+                        name="exportTemplate"
                         value={template}
                         onChange={(e) => setTemplate(e.target.value)}
                         className="w-full h-80 p-3 font-mono text-sm border border-border-default rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary transition"

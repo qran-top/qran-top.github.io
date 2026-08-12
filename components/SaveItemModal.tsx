@@ -91,6 +91,8 @@ const SaveItemModal: React.FC<SaveItemModalProps> = ({ item, collections, onClos
                                 </label>
                                 <input
                                     id="newCollection"
+                                    name="newCollection"
+                                    aria-label="اسم المجموعة الجديدة"
                                     type="text"
                                     value={newCollectionName}
                                     onChange={(e) => setNewCollectionName(e.target.value)}

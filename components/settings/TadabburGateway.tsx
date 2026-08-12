@@ -96,6 +96,7 @@ const TadabburGateway: React.FC<TadabburGatewayProps> = ({ onExportNotebook, onI
                             onChange={handleFileChange}
                             className="hidden"
                             id="notebook-upload"
+                            name="notebookUpload"
                         />
                         <label
                             htmlFor="notebook-upload"

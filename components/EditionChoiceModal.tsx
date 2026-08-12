@@ -49,6 +49,7 @@ const EditionChoiceModal: React.FC<EditionChoiceModalProps> = ({ onSelect }) => 
                         <input 
                             type="checkbox" 
                             id="dont-show-again"
+                            name="dontShowAgain"
                             checked={dontShowAgain}
                             onChange={(e) => setDontShowAgain(e.target.checked)}
                             className="w-4 h-4 text-primary bg-surface border-border-default rounded focus:ring-primary"

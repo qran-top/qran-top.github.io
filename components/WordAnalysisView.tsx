@@ -255,6 +255,9 @@ const WordAnalysisView: React.FC<WordAnalysisViewProps> = ({ simpleCleanData, in
                         </span>
                     </div>
                     <textarea 
+                        id="custom-prompt-textarea"
+                        name="customPrompt"
+                        aria-label="تعليمات التحليل"
                         value={customPrompt}
                         onChange={(e) => setCustomPrompt(e.target.value)}
                         className="w-full h-32 p-3 text-sm border border-blue-200 dark:border-blue-900 rounded-md bg-blue-50 dark:bg-blue-900/10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-text-secondary"
@@ -346,6 +349,9 @@ const WordAnalysisView: React.FC<WordAnalysisViewProps> = ({ simpleCleanData, in
                 <form onSubmit={(e) => { e.preventDefault(); handleAnalyze(); }} className="mb-8">
                     <div className="flex flex-col gap-4">
                         <input
+                            id="word-analysis-input"
+                            name="wordInput"
+                            aria-label="اكتب كلمة للتحليل"
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
@@ -396,6 +402,9 @@ const WordAnalysisView: React.FC<WordAnalysisViewProps> = ({ simpleCleanData, in
                                 </button>
                             </div>
                             <textarea
+                                id="summary-output-textarea"
+                                name="summaryOutput"
+                                aria-label="الملخص النصي للنتائج"
                                 readOnly
                                 value={generateSummaryText()}
                                 className="w-full h-48 p-3 text-sm font-mono border border-border-default rounded-md bg-surface text-text-secondary focus:outline-none resize-none"

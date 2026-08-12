@@ -160,6 +160,8 @@ const SearchForm: React.FC<SearchFormProps> = ({ onSearch, disabled = false, ini
             <form onSubmit={handleSubmit} className="flex-grow w-full max-w-xl flex items-center">
                 <div className="relative w-full">
                     <input
+                        id="search-quran-input"
+                        name="q"
                         type="search"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}

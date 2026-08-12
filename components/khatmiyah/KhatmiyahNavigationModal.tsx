@@ -151,6 +151,9 @@ const KhatmiyahNavigationModal: React.FC<KhatmiyahNavigationModalProps> = ({
                             <div className="relative flex items-center">
                                 <SearchIcon className="w-5 h-5 absolute right-3 text-text-muted pointer-events-none" />
                                 <input
+                                    id="khatmiyah-nav-search-input"
+                                    name="khatmiyahNavSearch"
+                                    aria-label="ابحث باسم السورة أو رقمها"
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}

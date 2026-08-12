@@ -37,6 +37,7 @@ const ApiKeySettings: React.FC = () => {
                 </label>
                 <input
                     id="api-key-input"
+                    name="apiKey"
                     type="password"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}

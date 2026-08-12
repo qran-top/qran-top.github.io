@@ -67,6 +67,9 @@ const RecitersModal: React.FC<RecitersModalProps> = ({ isOpen, onClose, onSelect
                     <div className="relative">
                         <SearchIcon className="w-4 h-4 text-text-muted absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         <input
+                            id="reciter-search-input"
+                            name="reciterSearch"
+                            aria-label="البحث عن القارئ"
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}

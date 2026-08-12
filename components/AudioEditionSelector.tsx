@@ -31,6 +31,8 @@ const AudioEditionSelector: React.FC<AudioEditionSelectorProps> = ({ audioEditio
              <div className="relative bg-surface border border-border-default rounded-full">
                 <SpeakerWaveIcon className={`${iconSizeClasses} text-text-subtle pointer-events-none absolute top-1/2 transform -translate-y-1/2 right-3 z-10`} />
                 <select 
+                    id="audio-edition-compact-select"
+                    name="audioEditionCompact"
                     value={selectedAudioEdition} 
                     onChange={(e) => onSelect(e.target.value)} 
                     className="w-full appearance-none cursor-pointer rounded-full bg-transparent py-1.5 pr-10 pl-3 text-sm font-semibold text-text-secondary focus:outline-none"
@@ -50,6 +52,8 @@ const AudioEditionSelector: React.FC<AudioEditionSelectorProps> = ({ audioEditio
         <div className="relative">
             <SpeakerWaveIcon className={`${iconSizeClasses} text-text-subtle pointer-events-none absolute top-1/2 transform -translate-y-1/2 right-4 z-10`} />
             <select 
+                id="audio-edition-select"
+                name="audioEdition"
                 value={selectedAudioEdition} 
                 onChange={(e) => onSelect(e.target.value)} 
                 className={`${baseClasses} ${sizeClasses}`}

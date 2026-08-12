@@ -62,6 +62,9 @@ const SavedItemCard: React.FC<SavedItemCardProps> = ({ item, onDelete, onUpdateN
                 {isEditingNotes ? (
                     <div>
                         <textarea
+                            id={`note-editor-${item.id}`}
+                            name="noteText"
+                            aria-label="اكتب تدبرك حول هذه الآية"
                             value={noteText}
                             onChange={(e) => setNoteText(e.target.value)}
                             placeholder="اكتب تدبرك هنا..."
