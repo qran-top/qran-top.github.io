@@ -336,6 +336,12 @@ export const SearchView: React.FC<SearchViewProps> = ({
     if (displayedResults.length > 0) onStartPlayback(displayedResults, selectedAudioEdition);
   };
 
+  const handlePlaySingleAyah = useCallback((index: number) => {
+    if (displayedResults.length > 0) {
+      onStartPlayback(displayedResults, selectedAudioEdition, index);
+    }
+  }, [displayedResults, onStartPlayback, selectedAudioEdition]);
+
   // --- Ayah Action Handlers ---
   const handleUthmaniWordClick = useCallback((e: React.MouseEvent<HTMLButtonElement>, resultIndex: number, simpleAyahText: string) => {
     setWordPopoverState(prev => prev?.resultIndex === resultIndex ? null : { resultIndex, simpleText: simpleAyahText, triggerElement: e.currentTarget });
@@ -544,11 +550,13 @@ export const SearchView: React.FC<SearchViewProps> = ({
                                 queryWords={searchType === 'number' ? [] : queryWords} onNewSearch={onNewSearch}
                                 displayEdition={displayEdition} displayEditionData={displayEditionData} searchEdition={searchEdition}
                                 fontSize={fontSize} fontStyle={fontStyle} searchType={searchType} isCurrentlyPlaying={ayah.number === currentlyPlayingAyahGlobalNumber}
+                                isPlaybackLoading={isPlaybackLoading}
                                 pulsingWordIndex={pulsingWord?.itemIndex === index ? pulsingWord.wordIndex : -1} resultIndex={index}
                                 simpleAyahText={simpleAyah?.text || ''}
                                 onUthmaniWordClick={handleUthmaniWordClick}
                                 onSaveAyah={handleSaveClick}
                                 onCopyAyah={handleCopyAyah}
+                                onPlayAyah={handlePlaySingleAyah}
                                 copiedAyah={copiedAyah}
                             />
                        );

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { MenuIcon, LogoIcon, PlayIcon, SpinnerIcon, BookmarkIcon, SpeakerWaveIcon, BookOpenIcon } from './icons';
+import { MenuIcon, LogoIcon, BookmarkIcon } from './icons';
 import { QURAN_INDEX } from '../quranIndex';
 import { formatSurahNameForDisplay } from '../utils/text';
 import SearchForm from './SearchForm';
@@ -7,8 +7,6 @@ import ThemeToggleButton from './ThemeToggleButton';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { useSettingsContext } from '../contexts/SettingsContext';
 import type { Ayah } from '../types';
-import RecitersModal from './RecitersModal';
-import SurahPickerModal from './SurahPickerModal';
 
 interface HeaderProps {
     setIsSidePanelOpen: (open: boolean) => void;
@@ -17,8 +15,8 @@ interface HeaderProps {
     onSearch: (query: string) => void;
     searchDisabled: boolean;
     loadingEditions: string[];
-    onStartPlayback: (ayahs: Ayah[], audioEditionIdentifier: string, startIndex?: number) => void;
-    isPlaybackLoading: boolean;
+    onStartPlayback?: (ayahs: Ayah[], audioEditionIdentifier: string, startIndex?: number) => void;
+    isPlaybackLoading?: boolean;
 }
 
 const Logo: React.FC<{ dataSourceStatus: 'primary' | 'fallback'; isHomePage: boolean }> = ({ dataSourceStatus, isHomePage }) => {
@@ -79,8 +77,6 @@ const Header: React.FC<HeaderProps> = ({
     
     // Auto-hide search bar on scroll down, show on scroll up
     const [isSearchVisible, setIsSearchVisible] = useState(true);
-    const [isRecitersModalOpen, setIsRecitersModalOpen] = useState(false);
-    const [isSurahPickerOpen, setIsSurahPickerOpen] = useState(false);
 
     useEffect(() => {
         let lastY = window.scrollY;
@@ -220,14 +216,6 @@ const Header: React.FC<HeaderProps> = ({
         }
     };
 
-    const handlePlaySurah = useCallback(() => {
-        if (!isOnline) {
-            alert("عذراً، الاستماع للتلاوة يتطلب اتصالاً بالإنترنت.");
-            return;
-        }
-        onStartPlayback([], selectedAudioEdition);
-    }, [onStartPlayback, selectedAudioEdition, isOnline]);
-
     const handleTitleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault();
         window.location.hash = '#/';
@@ -279,40 +267,6 @@ const Header: React.FC<HeaderProps> = ({
                         >
                             <BookmarkIcon className="w-4 h-4 text-primary" />
                         </a>
-
-                        {/* Surah Browsing Action Controls */}
-                        {isSurahOrPage && (
-                            <>
-                                <button
-                                    onClick={() => setIsSurahPickerOpen(true)}
-                                    className="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface-subtle hover:bg-surface-hover text-text-primary rounded-full border border-border-default text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
-                                    title="فهرس القرآن (قائمة السور)"
-                                >
-                                    <BookOpenIcon className="w-4 h-4 text-primary" />
-                                    <span className="hidden sm:inline">السور</span>
-                                </button>
-
-                                <button
-                                    onClick={() => setIsRecitersModalOpen(true)}
-                                    className="flex items-center gap-1.5 px-2.5 py-1.5 bg-surface-subtle hover:bg-surface-hover text-text-primary rounded-full border border-border-default text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
-                                    title="قائمة الأئمة والقراء"
-                                >
-                                    <SpeakerWaveIcon className="w-4 h-4 text-primary" />
-                                    <span className="hidden sm:inline">الأئمة</span>
-                                </button>
-
-                                <button
-                                    onClick={handlePlaySurah}
-                                    disabled={isPlaybackLoading}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-full shadow-xs hover:bg-primary-hover transition-all text-xs font-bold disabled:opacity-60 active:scale-95 cursor-pointer"
-                                    aria-label="استماع"
-                                    title={!isOnline ? "غير متاح بدون إنترنت" : "استماع للآيات"}
-                                >
-                                    {isPlaybackLoading ? <SpinnerIcon className="w-4 h-4 animate-spin"/> : <PlayIcon className="w-4 h-4"/>}
-                                    <span className="hidden sm:inline">استماع</span>
-                                </button>
-                            </>
-                        )}
                     </div>
 
                     {/* Center Group: Desktop Search */}
@@ -335,9 +289,6 @@ const Header: React.FC<HeaderProps> = ({
                     </div>
                 </div>
             </div>
-
-            <RecitersModal isOpen={isRecitersModalOpen} onClose={() => setIsRecitersModalOpen(false)} />
-            <SurahPickerModal isOpen={isSurahPickerOpen} onClose={() => setIsSurahPickerOpen(false)} />
         </header>
     );
 };

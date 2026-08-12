@@ -53,8 +53,47 @@ const ControlBar: React.FC<ControlBarProps> = ({
     }, [selectedEdition, setSelectedEdition, setBrowsingMode]);
 
     const handlePlaySurah = useCallback(() => {
-        onStartPlayback([], selectedAudioEdition);
-    }, [onStartPlayback, selectedAudioEdition]);
+        let startIndex = 0;
+        const elements = document.querySelectorAll('[id^="ayah-"]');
+        if (elements.length > 0) {
+            let closestElement: Element | null = null;
+            let closestDistance = Infinity;
+            const targetY = 140;
+
+            elements.forEach((el) => {
+                const rect = el.getBoundingClientRect();
+                if (rect.bottom > 0 && rect.top < window.innerHeight) {
+                    const distance = Math.abs(rect.top - targetY);
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestElement = el;
+                    }
+                }
+            });
+
+            if (closestElement) {
+                const id = (closestElement as HTMLElement).id;
+                const parts = id.split('-');
+                if (parts.length === 3) {
+                    const aNum = parseInt(parts[2], 10);
+                    const [path] = currentPath.substring(1).split('?');
+                    const pathParts = path.split('/').filter(Boolean);
+
+                    if (pathParts[0] === 'surah') {
+                        startIndex = Math.max(0, aNum - 1);
+                    } else if (pathParts[0] === 'page') {
+                        const ayahElements = Array.from(elements);
+                        const idx = ayahElements.indexOf(closestElement);
+                        if (idx !== -1) {
+                            startIndex = idx;
+                        }
+                    }
+                }
+            }
+        }
+
+        onStartPlayback([], selectedAudioEdition, startIndex);
+    }, [onStartPlayback, selectedAudioEdition, currentPath]);
 
     return (
         <div className="bg-surface border-b border-border-default">

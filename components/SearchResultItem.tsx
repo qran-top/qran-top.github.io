@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { Ayah, SurahData, QuranEdition, FontSize, FontStyleType } from '../types';
-import { SparklesIcon, BookmarkIcon, CopyIcon, CheckIcon } from './icons';
+import { SparklesIcon, BookmarkIcon, CopyIcon, CheckIcon, PlayIcon, SpinnerIcon, SpeakerWaveIcon } from './icons';
 import { normalizeArabicText } from '../utils/text';
 import { getQuranTextStyle } from '../utils/font';
 import { useSettingsContext } from '../contexts/SettingsContext';
@@ -18,6 +18,7 @@ interface SearchResultItemProps {
   fontStyle: FontStyleType;
   searchType: 'text' | 'number';
   isCurrentlyPlaying: boolean;
+  isPlaybackLoading?: boolean;
   itemRef: React.RefObject<HTMLLIElement>;
   pulsingWordIndex: number;
   resultIndex: number;
@@ -25,6 +26,7 @@ interface SearchResultItemProps {
   onUthmaniWordClick?: (event: React.MouseEvent<HTMLButtonElement>, resultIndex: number, simpleAyahText: string) => void;
   onSaveAyah?: (ayah: Ayah) => void;
   onCopyAyah?: (ayah: Ayah) => void;
+  onPlayAyah?: (resultIndex: number) => void;
   copiedAyah?: number | null;
 }
 
@@ -67,8 +69,8 @@ const getSurahMuqattaat = (surahNumber?: number): string | null => {
 
     const SearchResultItem: React.FC<SearchResultItemProps> = ({ 
     ayah, queryWords, onNewSearch, displayEdition, displayEditionData, 
-    fontSize, fontStyle, searchType, isCurrentlyPlaying, itemRef, pulsingWordIndex,
-    resultIndex, simpleAyahText, onUthmaniWordClick, onSaveAyah, onCopyAyah, copiedAyah
+    fontSize, fontStyle, searchType, isCurrentlyPlaying, isPlaybackLoading, itemRef, pulsingWordIndex,
+    resultIndex, simpleAyahText, onUthmaniWordClick, onSaveAyah, onCopyAyah, onPlayAyah, copiedAyah
 }) => {
     const { wordClickBehavior, enableWordAudio, enableMorphology } = useSettingsContext();
 
@@ -240,6 +242,27 @@ const getSurahMuqattaat = (surahNumber?: number): string | null => {
                             </span>
                         );
                     })()}
+                    {onPlayAyah && (
+                        <button
+                            onClick={() => onPlayAyah(resultIndex)}
+                            className={`p-1.5 rounded-lg border transition-all flex items-center gap-1 text-xs font-semibold ${
+                                isCurrentlyPlaying
+                                    ? 'bg-primary text-white border-primary shadow-xs'
+                                    : 'text-text-secondary hover:text-primary hover:bg-surface-hover border-border-default'
+                            }`}
+                            aria-label="تشغيل صوت الآية"
+                            title="استماع لهذه الآية"
+                        >
+                            {isCurrentlyPlaying && isPlaybackLoading ? (
+                                <SpinnerIcon className="w-4 h-4 animate-spin text-white" />
+                            ) : isCurrentlyPlaying ? (
+                                <SpeakerWaveIcon className="w-4 h-4 text-white animate-pulse" />
+                            ) : (
+                                <PlayIcon className="w-4 h-4 text-primary" />
+                            )}
+                            <span className="hidden sm:inline">استماع</span>
+                        </button>
+                    )}
                     {onCopyAyah && (
                         <button
                             onClick={() => onCopyAyah(displayAyah)}

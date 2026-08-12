@@ -250,6 +250,9 @@ const App: React.FC = () => {
 
                     {isPageWithToolbox && <Toolbox
                         isAudioPlayerVisible={!!playbackInfo}
+                        onStartPlayback={handleStartPlayback as (ayahs: Ayah[], audioEditionIdentifier: string, startIndex?: number) => void}
+                        isPlaybackLoading={!!playbackInfo?.trigger}
+                        currentPath={currentPath}
                     />}
                     {itemToSave && <SaveItemModal item={itemToSave} collections={collections} onClose={() => setItemToSave(null)} onSave={handleConfirmSave} />}
                     {externalLinkUrl && <ExternalLinkModal url={externalLinkUrl} onClose={() => setExternalLinkUrl(null)} />}
