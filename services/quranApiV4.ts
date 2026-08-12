@@ -138,3 +138,132 @@ export function getWordAudioUrl(relativeAudioUrl: string): string {
     const cleanPath = relativeAudioUrl.startsWith('/') ? relativeAudioUrl.substring(1) : relativeAudioUrl;
     return `https://audio.qurancdn.com/${cleanPath}`;
 }
+
+/**
+ * Normalizes text for clean matching between Uthmani and Simple/Imlai Quranic script
+ */
+export function normalizeForWordMatch(text: string): string {
+    if (!text) return '';
+    return text
+        .replace(/<[^>]*>/g, '')
+        .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u06E5\u06E6\u08F0-\u08FF]/g, '')
+        .replace(/[أإآٱءؤئ]/g, 'ا')
+        .replace(/ى/g, 'ي')
+        .replace(/ة/g, 'ه')
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .trim();
+}
+
+function getLevenshteinDistance(a: string, b: string): number {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const matrix: number[][] = [];
+    for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+    return matrix[b.length][a.length];
+}
+
+/**
+ * Plays word audio using smart Uthmani-to-Simple alignment
+ */
+export async function playSmartWordAudio(
+    surahNum: number,
+    ayahNum: number,
+    approxWordIndexOneBased: number,
+    clickedWordText?: string
+): Promise<void> {
+    try {
+        let audioUrl: string | null = null;
+
+        if (surahNum && ayahNum) {
+            const chapterVerses = await fetchChapterVersesV4(surahNum);
+            const verse = chapterVerses.find(v => v.verse_number === ayahNum);
+
+            if (verse && verse.words && verse.words.length > 0) {
+                const filteredV4Words = verse.words.filter(w => (w as any).char_type_name !== 'end');
+
+                if (filteredV4Words.length > 0) {
+                    const cleanClicked = clickedWordText ? normalizeForWordMatch(clickedWordText) : '';
+                    const approxZeroIdx = Math.max(0, approxWordIndexOneBased - 1);
+
+                    if (cleanClicked) {
+                        let bestMatch = filteredV4Words[0];
+                        let bestScore = -999;
+
+                        filteredV4Words.forEach((vWord, vIdx) => {
+                            const vNorm = normalizeForWordMatch(vWord.text_uthmani);
+                            let score = 0;
+
+                            if (vNorm === cleanClicked) {
+                                score += 100;
+                            } else if (vNorm.includes(cleanClicked) || cleanClicked.includes(vNorm)) {
+                                score += 75;
+                            } else {
+                                const dist = getLevenshteinDistance(cleanClicked, vNorm);
+                                const maxLen = Math.max(cleanClicked.length, vNorm.length);
+                                if (maxLen > 0) {
+                                    score += ((maxLen - dist) / maxLen) * 60;
+                                }
+                            }
+
+                            const idxDiff = vIdx - approxZeroIdx;
+                            if (idxDiff === 0) score += 20;
+                            else if (idxDiff === 1 || idxDiff === -1) score += 15;
+                            else if (idxDiff > 1) score -= (idxDiff - 1) * 3;
+                            else if (idxDiff < -1) score -= Math.abs(idxDiff) * 8;
+
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestMatch = vWord;
+                            }
+                        });
+
+                        if (bestMatch.audio_url) {
+                            audioUrl = getWordAudioUrl(bestMatch.audio_url);
+                        } else {
+                            const surahPadded = String(surahNum).padStart(3, '0');
+                            const ayahPadded = String(ayahNum).padStart(3, '0');
+                            const wordPadded = String(bestMatch.position).padStart(3, '0');
+                            audioUrl = `https://audio.qurancdn.com/wbw/${surahPadded}_${ayahPadded}_${wordPadded}.mp3`;
+                        }
+                    } else if (filteredV4Words[approxZeroIdx]) {
+                        const targetWord = filteredV4Words[approxZeroIdx];
+                        audioUrl = targetWord.audio_url
+                            ? getWordAudioUrl(targetWord.audio_url)
+                            : `https://audio.qurancdn.com/wbw/${String(surahNum).padStart(3, '0')}_${String(ayahNum).padStart(3, '0')}_${String(targetWord.position).padStart(3, '0')}.mp3`;
+                    }
+                }
+            }
+        }
+
+        if (!audioUrl) {
+            const surahPadded = String(surahNum).padStart(3, '0');
+            const ayahPadded = String(ayahNum).padStart(3, '0');
+            const wordPadded = String(approxWordIndexOneBased).padStart(3, '0');
+            audioUrl = `https://audio.qurancdn.com/wbw/${surahPadded}_${ayahPadded}_${wordPadded}.mp3`;
+        }
+
+        const audio = new Audio(audioUrl);
+        await audio.play();
+    } catch (e) {
+        const surahPadded = String(surahNum).padStart(3, '0');
+        const ayahPadded = String(ayahNum).padStart(3, '0');
+        const wordPadded = String(approxWordIndexOneBased).padStart(3, '0');
+        const fallbackUrl = `https://audio.qurancdn.com/wbw/${surahPadded}_${ayahPadded}_${wordPadded}.mp3`;
+        new Audio(fallbackUrl).play().catch(() => {});
+    }
+}
+

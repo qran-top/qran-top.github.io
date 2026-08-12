@@ -4,6 +4,7 @@ import { SparklesIcon, BookmarkIcon, CopyIcon, CheckIcon, PlayIcon, SpinnerIcon,
 import { normalizeArabicText } from '../utils/text';
 import { getQuranTextStyle } from '../utils/font';
 import { useSettingsContext } from '../contexts/SettingsContext';
+import { playSmartWordAudio } from '../services/quranApiV4';
 import WordActionPopover from './WordActionPopover';
 import WordMorphologyModal from './WordMorphologyModal';
 
@@ -112,15 +113,8 @@ const getSurahMuqattaat = (surahNumber?: number): string | null => {
 
     const { className: quranTextClass } = getQuranTextStyle(fontStyle, fontSize);
 
-    const playWordAudio = (surahNum: number, ayahNum: number, wordIdxOneBased: number) => {
-        try {
-            const surahPadded = String(surahNum).padStart(3, '0');
-            const ayahPadded = String(ayahNum).padStart(3, '0');
-            const wordPadded = String(wordIdxOneBased).padStart(3, '0');
-            const audioUrl = `https://audio.qurancdn.com/wbw/${surahPadded}_${ayahPadded}_${wordPadded}.mp3`;
-            const audio = new Audio(audioUrl);
-            audio.play().catch(() => {});
-        } catch (e) {}
+    const playWordAudio = (surahNum: number, ayahNum: number, wordIdxOneBased: number, clickedWordText?: string) => {
+        playSmartWordAudio(surahNum, ayahNum, wordIdxOneBased, clickedWordText);
     };
 
     const handleWordClick = (e: React.MouseEvent<HTMLButtonElement>, rawWord: string, wordIndex: number) => {
@@ -139,7 +133,7 @@ const getSurahMuqattaat = (surahNumber?: number): string | null => {
 
         if (shouldSearchDirectly) {
             if (enableWordAudio) {
-                playWordAudio(displayAyah.surah.number, displayAyah.numberInSurah, wordIndex + 1);
+                playWordAudio(displayAyah.surah.number, displayAyah.numberInSurah, wordIndex + 1, cleanWord);
             }
             onNewSearch(cleanWord, 'quran-simple-clean', { surah: displayAyah.surah.number, ayah: displayAyah.numberInSurah, wordIndex });
         } else {
@@ -324,7 +318,8 @@ const getSurahMuqattaat = (surahNumber?: number): string | null => {
                         playWordAudio(
                             activeWordPopover.surahNumber,
                             activeWordPopover.ayahNumberInSurah,
-                            activeWordPopover.wordIndex + 1
+                            activeWordPopover.wordIndex + 1,
+                            activeWordPopover.word
                         );
                     }}
                     onOpenMorphology={() => {

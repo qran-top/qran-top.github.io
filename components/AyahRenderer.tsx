@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Ayah, SurahData } from '../types';
 import { useSettingsContext } from '../contexts/SettingsContext';
-import { fetchChapterTajweedVerses, QuranV4TajweedVerse } from '../services/quranApiV4';
+import { fetchChapterTajweedVerses, QuranV4TajweedVerse, playSmartWordAudio } from '../services/quranApiV4';
 import WordActionPopover from './WordActionPopover';
 import WordMorphologyModal from './WordMorphologyModal';
 
@@ -110,20 +110,14 @@ const AyahRenderer: React.FC<AyahRendererProps> = ({
         return () => { isMounted = false; };
     }, [enableTajweed, surah?.number]);
 
-    // Function to play word-by-word audio from Quran.com API v4 CDN
-    const playWordAudio = (surahNum: number, ayahNum: number, wordIdxOneBased: number) => {
+    // Function to play word-by-word audio using smart alignment
+    const playWordAudio = (surahNum: number, ayahNum: number, wordIdxOneBased: number, clickedWordText?: string) => {
         try {
-            const surahPadded = String(surahNum).padStart(3, '0');
-            const ayahPadded = String(ayahNum).padStart(3, '0');
-            const wordPadded = String(wordIdxOneBased).padStart(3, '0');
-            const audioUrl = `https://audio.qurancdn.com/wbw/${surahPadded}_${ayahPadded}_${wordPadded}.mp3`;
             const wordKey = `${surahNum}:${ayahNum}:${wordIdxOneBased}`;
-
             setPlayingWordKey(wordKey);
-            const audio = new Audio(audioUrl);
-            audio.play().catch(() => {});
-            audio.onended = () => setPlayingWordKey(null);
-            audio.onerror = () => setPlayingWordKey(null);
+            playSmartWordAudio(surahNum, ayahNum, wordIdxOneBased, clickedWordText).finally(() => {
+                setTimeout(() => setPlayingWordKey(null), 1000);
+            });
         } catch (e) {
             setPlayingWordKey(null);
         }
@@ -147,7 +141,7 @@ const AyahRenderer: React.FC<AyahRendererProps> = ({
 
         if (shouldSearchDirectly) {
             if (enableWordAudio) {
-                playWordAudio(surah.number, ayahNumInSurah, wordIndex + 1);
+                playWordAudio(surah.number, ayahNumInSurah, wordIndex + 1, cleanWord);
             }
             onWordClick(cleanWord, displayEdition.identifier, { surah: surah.number, ayah: ayahNumInSurah, wordIndex });
         } else {
@@ -265,7 +259,7 @@ const AyahRenderer: React.FC<AyahRendererProps> = ({
                         });
                     }}
                     onPlayAudio={() => {
-                        playWordAudio(activeWordPopover.surahNumber, activeWordPopover.ayahNumberInSurah, activeWordPopover.wordIndex + 1);
+                        playWordAudio(activeWordPopover.surahNumber, activeWordPopover.ayahNumberInSurah, activeWordPopover.wordIndex + 1, activeWordPopover.word);
                     }}
                     onOpenMorphology={() => {
                         setActiveMorphologyModal({
