@@ -65,7 +65,7 @@ const Toolbox: React.FC<ToolboxProps> = ({
 
     const handlePlaySurah = () => {
         if (!navigator.onLine) {
-            alert("عذراً، الاستماع للتلاوة يتطلب اتصالاً بالإنترنت.");
+            console.warn("Audio playback requires network connection.");
             return;
         }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Ayah, QuranEdition, SurahData } from '../types';
-import { getAudioUrl, getBismillahAudioUrl, getSecondaryAudioUrl } from '../utils/audio';
+import { getAudioUrl, getBismillahAudioUrl, getSecondaryAudioUrl, getGlobalAyahNumber } from '../utils/audio';
 import { ALL_AUDIO_EDITIONS } from '../data/audioEditions';
 
 export const useAudioPlayer = (
@@ -22,7 +22,7 @@ export const useAudioPlayer = (
             if (fallback) {
                 setSelectedAudioEdition('ar.alafasy');
                 handleStartPlayback(ayahsForPlaylist, 'ar.alafasy', startIndex);
-            } else { alert("لم يتم العثور على المصدر الصوتي المختار."); }
+            }
             return;
         }
 
@@ -67,7 +67,7 @@ export const useAudioPlayer = (
         };
 
         const generatePlaylist = (basePlaylist: Ayah[]) => {
-            if (basePlaylist.length === 0) { alert("لا يمكن إنشاء قائمة التشغيل."); return null; }
+            if (basePlaylist.length === 0) return null;
             let finalPlaylist = basePlaylist.map(ayah => {
                 let audioUrl = getAudioUrl(ayah, audioEditionDetails);
                 const secondaryAudio = getSecondaryAudioUrl(ayah, audioEditionIdentifier);
@@ -76,8 +76,16 @@ export const useAudioPlayer = (
                     const audioData = allQuranData?.[audioEditionIdentifier];
                     const audioSurah = audioData?.find(s => s.number === ayah.surah?.number);
                     const audioAyah = audioSurah?.ayahs.find(a => a.numberInSurah === ayah.numberInSurah);
-                    audioUrl = audioAyah?.audio;
+                    if (audioAyah?.audio) {
+                        audioUrl = audioAyah.audio;
+                    }
                 }
+
+                if (!audioUrl && ayah.surah) {
+                    const globalNum = ayah.number || getGlobalAyahNumber(ayah.surah.number, ayah.numberInSurah);
+                    audioUrl = `https://cdn.islamic.network/quran/audio/128/${audioEditionIdentifier || 'ar.alafasy'}/${globalNum}.mp3`;
+                }
+
                 return { 
                     ...ayah, 
                     audio: audioUrl,
@@ -86,8 +94,8 @@ export const useAudioPlayer = (
             }).filter((item): item is Ayah & { audio: string } => !!item.audio);
 
             const firstAyahOfPlaylist = basePlaylist[0];
-            const surahForPlaylist = firstAyahOfPlaylist.surah;
-            const needsBismillah = startIndex === 0 && firstAyahOfPlaylist.numberInSurah === 1 && surahForPlaylist && surahForPlaylist.number !== 1 && surahForPlaylist.number !== 9;
+            const surahForPlaylist = firstAyahOfPlaylist?.surah;
+            const needsBismillah = startIndex === 0 && firstAyahOfPlaylist?.numberInSurah === 1 && surahForPlaylist && surahForPlaylist.number !== 1 && surahForPlaylist.number !== 9;
             
             if (needsBismillah) {
                 const bismillahAudioUrl = getBismillahAudioUrl(audioEditionDetails);
@@ -98,14 +106,16 @@ export const useAudioPlayer = (
             return finalPlaylist;
         };
 
-        if (audioEditionDetails.sourceApi !== 'alquran.cloud' || allQuranData?.[audioEditionIdentifier]) {
-            const playlistBase = getPlaylistData();
-            const finalPlaylist = generatePlaylist(playlistBase);
-            if (finalPlaylist && finalPlaylist.length > 0) setPlaybackInfo({ playlist: finalPlaylist, currentIndex: 0, isPlaying: true });
-            else { alert("لم يتم العثور على بيانات صوتية."); setPlaybackInfo(null); }
+        const playlistBase = getPlaylistData();
+        const finalPlaylist = generatePlaylist(playlistBase);
+        if (finalPlaylist && finalPlaylist.length > 0) {
+            setPlaybackInfo({ playlist: finalPlaylist, currentIndex: 0, isPlaying: true });
+        } else if (audioEditionDetails.sourceApi === 'alquran.cloud' && !allQuranData?.[audioEditionIdentifier]) {
+            fetchCustomEditionData(audioEditionIdentifier);
+            setPlaybackInfo({ playlist: [], currentIndex: 0, isPlaying: false, trigger: { ayahsForPlaylist, audioEditionIdentifier, startIndex } });
         } else {
-             fetchCustomEditionData(audioEditionIdentifier);
-             setPlaybackInfo({ playlist: [], currentIndex: 0, isPlaying: false, trigger: { ayahsForPlaylist, audioEditionIdentifier, startIndex } });
+            console.warn("[useAudioPlayer] Could not generate playlist for audio playback.");
+            setPlaybackInfo(null);
         }
     }, [allQuranData, fetchCustomEditionData, currentPath, setSelectedAudioEdition]);
 

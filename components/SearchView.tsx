@@ -376,8 +376,16 @@ export const SearchView: React.FC<SearchViewProps> = ({
     setActivePopover(null);
   };
   const handlePlayFromAyah = (ayah: Ayah) => {
-    const startIndex = results.findIndex(a => a.number === ayah.number);
-    if (startIndex !== -1) onStartPlayback(results, selectedAudioEdition, startIndex);
+    const listToPlay = displayedResults.length > 0 ? displayedResults : results;
+    let startIndex = listToPlay.findIndex(a => 
+      a.number === ayah.number || 
+      (a.surah?.number === ayah.surah?.number && a.numberInSurah === ayah.numberInSurah)
+    );
+    if (startIndex !== -1) {
+      onStartPlayback(listToPlay, selectedAudioEdition, startIndex);
+    } else {
+      onStartPlayback([ayah], selectedAudioEdition, 0);
+    }
     setActivePopover(null);
   };
 
