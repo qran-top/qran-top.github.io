@@ -30,6 +30,13 @@ const getNormalizedText = (ayah: any): string => {
     return ayah._normalizedText;
 };
 
+const getNormalizedWords = (ayah: any): string[] => {
+    if (ayah._normalizedWords === undefined) {
+        ayah._normalizedWords = getNormalizedText(ayah).split(/\s+/).filter(Boolean);
+    }
+    return ayah._normalizedWords;
+};
+
 const findNeighboringWords = (results: Ayah[], query: string): string[] => {
     const normalizedQueryWords = normalizeArabicText(query).trim().split(' ').filter(w => w.length > 0);
     const numQueryWords = normalizedQueryWords.length;
@@ -46,7 +53,7 @@ const findNeighboringWords = (results: Ayah[], query: string): string[] => {
     };
 
     results.forEach(ayah => {
-        const ayahWords = getNormalizedText(ayah).split(' ');
+        const ayahWords = getNormalizedWords(ayah);
         const numAyahWords = ayahWords.length;
 
         if (numQueryWords === 1) {
@@ -81,7 +88,7 @@ const findNeighboringWords = (results: Ayah[], query: string): string[] => {
 
 const getAyahMatchTier = (ayah: Ayah, queryWords: string[]): number => {
     if (!queryWords || queryWords.length === 0) return 0;
-    const words = getNormalizedText(ayah).split(/\s+/).filter(Boolean);
+    const words = getNormalizedWords(ayah);
     if (words.length === 0) return 2;
     
     const fullQuery = queryWords.join(' ');
@@ -132,7 +139,7 @@ export const useSearchLogic = (
             
             uniqueWords.forEach(word => {
                 const count = deferredResults.filter(ayah => {
-                    const ayahWords = getNormalizedText(ayah).split(' ');
+                    const ayahWords = getNormalizedWords(ayah);
                     return ayahWords.includes(word);
                 }).length;
                 if (count > 0) {
@@ -151,7 +158,7 @@ export const useSearchLogic = (
         const currentResults = deferredResults;
         const phrasesToConsider = new Set<string>();
         currentResults.forEach(ayah => {
-            const ayahWords = getNormalizedText(ayah).split(' ');
+            const ayahWords = getNormalizedWords(ayah);
             const indices: number[] = [];
             ayahWords.forEach((word, index) => {
                 if (queryWords.includes(word)) {
@@ -239,7 +246,7 @@ export const useSearchLogic = (
         const searchTerms = transformedQuery.split(' ');
 
         displayedResults.forEach((resultAyah, itemIndex) => {
-            const ayahWords = getNormalizedText(resultAyah).split(' ');
+            const ayahWords = getNormalizedWords(resultAyah);
             
             for (let i = 0; i <= ayahWords.length - searchTerms.length; i++) {
                 const slice = ayahWords.slice(i, i + searchTerms.length);
@@ -276,7 +283,7 @@ export const useSearchLogic = (
         let count = 0;
         const wordSet = new Set(queryWords);
         for (let i = 0; i < deferredResults.length; i++) {
-            const ayahWords = getNormalizedText(deferredResults[i]).split(' ');
+            const ayahWords = getNormalizedWords(deferredResults[i]);
             for (let j = 0; j < ayahWords.length; j++) {
                 if (wordSet.has(ayahWords[j])) {
                     count++;

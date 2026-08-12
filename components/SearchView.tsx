@@ -67,7 +67,12 @@ export const SearchView: React.FC<SearchViewProps> = ({
   const [copiedAyah, setCopiedAyah] = useState<number | null>(null);
   const [cachedAnalysisExists, setCachedAnalysisExists] = useState(false);
   const [pulsingWord, setPulsingWord] = useState<{ itemIndex: number; wordIndex: number } | null>(null);
-  
+
+  // Pagination / Batching for super-fast DOM rendering on frequent queries (like "الله")
+  const INITIAL_BATCH_SIZE = 30;
+  const [visibleCount, setVisibleCount] = useState<number>(INITIAL_BATCH_SIZE);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+
   const {
     exactMatch, setExactMatch,
     visibleSuggestionsCount, handleShowMore,
@@ -81,6 +86,35 @@ export const SearchView: React.FC<SearchViewProps> = ({
     formatResultsForExport,
   } = useSearchLogic(query, correctedQuery, results, searchType as 'text' | 'number', simpleCleanData, isRootSearch);
 
+  // Reset pagination whenever query, filters or sorting change
+  useEffect(() => {
+    setVisibleCount(INITIAL_BATCH_SIZE);
+  }, [query, correctedQuery, activePhraseFilter, exactMatch, wordSortMode, searchType, isRootSearch]);
+
+  const paginatedResults = useMemo(() => {
+    return displayedResults.slice(0, visibleCount);
+  }, [displayedResults, visibleCount]);
+
+  // Infinite scroll trigger via IntersectionObserver
+  useEffect(() => {
+    if (visibleCount >= displayedResults.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount(prev => Math.min(prev + 40, displayedResults.length));
+        }
+      },
+      { rootMargin: '300px' }
+    );
+
+    const currentSentinel = loadMoreSentinelRef.current;
+    if (currentSentinel) observer.observe(currentSentinel);
+
+    return () => {
+      if (currentSentinel) observer.unobserve(currentSentinel);
+    };
+  }, [visibleCount, displayedResults.length]);
 
   const normalizedQueryForDiscussion = useMemo(() => {
     if (searchType === 'number') return `topic:ayah-number:${query}`;
@@ -114,19 +148,33 @@ export const SearchView: React.FC<SearchViewProps> = ({
   useEffect(() => {
     if (currentlyPlayingAyahGlobalNumber) {
         const playingIndex = displayedResults.findIndex(ayah => ayah.number === currentlyPlayingAyahGlobalNumber);
-        if (playingIndex !== -1 && itemRefs.current[playingIndex]?.current) {
-            itemRefs.current[playingIndex].current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (playingIndex !== -1) {
+            if (playingIndex >= visibleCount) {
+                setVisibleCount(playingIndex + 20);
+            }
+            setTimeout(() => {
+                if (itemRefs.current[playingIndex]?.current) {
+                    itemRefs.current[playingIndex].current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
         }
     }
-  }, [currentlyPlayingAyahGlobalNumber, displayedResults]);
+  }, [currentlyPlayingAyahGlobalNumber, displayedResults, visibleCount]);
 
   const handleJumpToOccurrence = (target: number) => {
     const occurrence = occurrencesMap[target - 1];
-    if (occurrence && itemRefs.current[occurrence.itemIndex]?.current) {
-        const element = itemRefs.current[occurrence.itemIndex].current;
-        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setPulsingWord({ itemIndex: occurrence.itemIndex, wordIndex: occurrence.wordIndex });
-        setTimeout(() => setPulsingWord(null), 3000);
+    if (occurrence) {
+        if (occurrence.itemIndex >= visibleCount) {
+            setVisibleCount(occurrence.itemIndex + 20);
+        }
+        setTimeout(() => {
+            if (itemRefs.current[occurrence.itemIndex]?.current) {
+                const element = itemRefs.current[occurrence.itemIndex].current;
+                element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setPulsingWord({ itemIndex: occurrence.itemIndex, wordIndex: occurrence.wordIndex });
+                setTimeout(() => setPulsingWord(null), 3000);
+            }
+        }, 100);
     }
   };
 
@@ -548,28 +596,56 @@ export const SearchView: React.FC<SearchViewProps> = ({
         
         <div className="mt-6">
             {displayedResults.length > 0 ? (
-                <ul className="space-y-4">
-                    {displayedResults.map((ayah, index) => {
-                        const simpleSurah = simpleCleanData.find(s => s.number === ayah.surah?.number);
-                        const simpleAyah = simpleSurah?.ayahs.find(a => a.numberInSurah === ayah.numberInSurah);
-                        return (
-                           <SearchResultItem 
-                                key={ayah.number} itemRef={itemRefs.current[index]} ayah={ayah} 
-                                queryWords={searchType === 'number' ? [] : queryWords} onNewSearch={onNewSearch}
-                                displayEdition={displayEdition} displayEditionData={displayEditionData} searchEdition={searchEdition}
-                                fontSize={fontSize} fontStyle={fontStyle} searchType={searchType} isCurrentlyPlaying={ayah.number === currentlyPlayingAyahGlobalNumber}
-                                isPlaybackLoading={isPlaybackLoading}
-                                pulsingWordIndex={pulsingWord?.itemIndex === index ? pulsingWord.wordIndex : -1} resultIndex={index}
-                                simpleAyahText={simpleAyah?.text || ''}
-                                onUthmaniWordClick={handleUthmaniWordClick}
-                                onSaveAyah={handleSaveClick}
-                                onCopyAyah={handleCopyAyah}
-                                onPlayAyah={handlePlaySingleAyah}
-                                copiedAyah={copiedAyah}
-                            />
-                       );
-                    })}
-                </ul>
+                <>
+                    <ul className="space-y-4">
+                        {paginatedResults.map((ayah, index) => {
+                            const simpleSurah = simpleCleanData.find(s => s.number === ayah.surah?.number);
+                            const simpleAyah = simpleSurah?.ayahs.find(a => a.numberInSurah === ayah.numberInSurah);
+                            return (
+                               <SearchResultItem 
+                                    key={ayah.number} itemRef={itemRefs.current[index]} ayah={ayah} 
+                                    queryWords={searchType === 'number' ? [] : queryWords} onNewSearch={onNewSearch}
+                                    displayEdition={displayEdition} displayEditionData={displayEditionData} searchEdition={searchEdition}
+                                    fontSize={fontSize} fontStyle={fontStyle} searchType={searchType} isCurrentlyPlaying={ayah.number === currentlyPlayingAyahGlobalNumber}
+                                    isPlaybackLoading={isPlaybackLoading}
+                                    pulsingWordIndex={pulsingWord?.itemIndex === index ? pulsingWord.wordIndex : -1} resultIndex={index}
+                                    simpleAyahText={simpleAyah?.text || ''}
+                                    onUthmaniWordClick={handleUthmaniWordClick}
+                                    onSaveAyah={handleSaveClick}
+                                    onCopyAyah={handleCopyAyah}
+                                    onPlayAyah={handlePlaySingleAyah}
+                                    copiedAyah={copiedAyah}
+                                />
+                           );
+                        })}
+                    </ul>
+
+                    {displayedResults.length > visibleCount && (
+                        <div ref={loadMoreSentinelRef} className="mt-8 py-6 px-4 bg-surface-subtle border border-border-default rounded-2xl text-center space-y-3 shadow-xs">
+                            <div className="text-sm font-bold text-text-primary">
+                                تم عرض <span className="text-primary font-mono">{visibleCount}</span> من إجمالي <span className="text-primary font-mono">{displayedResults.length}</span> آية
+                            </div>
+                            <p className="text-xs text-text-muted">
+                                اسحب للأسفل لعرض المزيد تلقائياً، أو انقر أحد الخيارات التالية:
+                            </p>
+                            <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
+                                <button
+                                    onClick={() => setVisibleCount(prev => Math.min(prev + 50, displayedResults.length))}
+                                    className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-hover active:scale-95 transition-all shadow-xs cursor-pointer flex items-center gap-2"
+                                >
+                                    <SearchIcon className="w-4 h-4" />
+                                    <span>عرض 50 آية إضافية</span>
+                                </button>
+                                <button
+                                    onClick={() => setVisibleCount(displayedResults.length)}
+                                    className="px-4 py-2.5 bg-surface text-text-primary border border-border-default hover:bg-surface-hover rounded-xl text-sm font-semibold active:scale-95 transition-all cursor-pointer shadow-2xs"
+                                >
+                                    عرض كل النتائج ({displayedResults.length})
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
             ) : (<div className="text-center p-10 text-lg text-text-muted">لم يتم العثور على نتائج.</div>)}
         </div>
       </main>
