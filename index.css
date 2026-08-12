@@ -124,7 +124,7 @@ body {
 /* External Font Declarations with reliable Google Fonts fallback */
 @font-face {
   font-family: 'UthmanicHafs';
-  src: url('https://fonts.gstatic.com/s/amiriquran/v1/AmiriQuran-Regular.ttf') format('truetype');
+  src: local('Amiri Quran'), local('Scheherazade New');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
