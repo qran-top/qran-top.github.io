@@ -177,7 +177,7 @@ function getLevenshteinDistance(a: string, b: string): number {
 }
 
 /**
- * Plays word audio using smart Uthmani-to-Simple alignment
+ * Plays word audio using smart Uthmani-to-Simple alignment and sequential word audio indexing
  */
 export async function playSmartWordAudio(
     surahNum: number,
@@ -193,14 +193,17 @@ export async function playSmartWordAudio(
             const verse = chapterVerses.find(v => v.verse_number === ayahNum);
 
             if (verse && verse.words && verse.words.length > 0) {
-                const filteredV4Words = verse.words.filter(w => (w as any).char_type_name !== 'end');
+                // Filter strictly for actual spoken words ('word') to match CDN sequential audio files
+                const filteredV4Words = verse.words.filter(w => (w as any).char_type_name === 'word');
 
                 if (filteredV4Words.length > 0) {
                     const cleanClicked = clickedWordText ? normalizeForWordMatch(clickedWordText) : '';
                     const approxZeroIdx = Math.max(0, approxWordIndexOneBased - 1);
 
+                    let targetSeqIndex = Math.min(approxWordIndexOneBased, filteredV4Words.length);
+
                     if (cleanClicked) {
-                        let bestMatch = filteredV4Words[0];
+                        let bestVIdx = 0;
                         let bestScore = -999;
 
                         filteredV4Words.forEach((vWord, vIdx) => {
@@ -227,24 +230,17 @@ export async function playSmartWordAudio(
 
                             if (score > bestScore) {
                                 bestScore = score;
-                                bestMatch = vWord;
+                                bestVIdx = vIdx;
                             }
                         });
 
-                        if (bestMatch.audio_url) {
-                            audioUrl = getWordAudioUrl(bestMatch.audio_url);
-                        } else {
-                            const surahPadded = String(surahNum).padStart(3, '0');
-                            const ayahPadded = String(ayahNum).padStart(3, '0');
-                            const wordPadded = String(bestMatch.position).padStart(3, '0');
-                            audioUrl = `https://audio.qurancdn.com/wbw/${surahPadded}_${ayahPadded}_${wordPadded}.mp3`;
-                        }
-                    } else if (filteredV4Words[approxZeroIdx]) {
-                        const targetWord = filteredV4Words[approxZeroIdx];
-                        audioUrl = targetWord.audio_url
-                            ? getWordAudioUrl(targetWord.audio_url)
-                            : `https://audio.qurancdn.com/wbw/${String(surahNum).padStart(3, '0')}_${String(ayahNum).padStart(3, '0')}_${String(targetWord.position).padStart(3, '0')}.mp3`;
+                        targetSeqIndex = bestVIdx + 1;
                     }
+
+                    const surahPadded = String(surahNum).padStart(3, '0');
+                    const ayahPadded = String(ayahNum).padStart(3, '0');
+                    const wordPadded = String(targetSeqIndex).padStart(3, '0');
+                    audioUrl = `https://audio.qurancdn.com/wbw/${surahPadded}_${ayahPadded}_${wordPadded}.mp3`;
                 }
             }
         }
