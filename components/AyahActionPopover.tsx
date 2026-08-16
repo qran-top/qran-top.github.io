@@ -56,7 +56,7 @@ const AyahActionPopover: React.FC<{
         <div 
             ref={popoverRef} 
             style={style}
-            className="popover-content w-max p-1.5 bg-surface rounded-2xl shadow-xl border border-primary/20 flex items-center gap-1 z-50 animate-fade-in"
+            className="popover-content w-[90vw] max-w-max p-1.5 bg-surface rounded-2xl shadow-xl border border-primary/20 flex flex-wrap justify-center items-center gap-1 z-50 animate-fade-in"
             role="dialog"
             aria-label="إجراءات الآية"
         >
@@ -64,38 +64,38 @@ const AyahActionPopover: React.FC<{
                 <>
                     <button 
                         onClick={() => { onStartSelection(activePopover.ayah); onClose(); }} 
-                        className="p-2.5 rounded-xl text-text-subtle hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1.5 cursor-pointer" 
+                        className="p-1.5 sm:p-2.5 rounded-xl text-text-subtle hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1.5 cursor-pointer" 
                         title="تحديد أكثر من آية للنسخ"
                     >
                         <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span className="text-xs font-bold">تحديد متعدد</span>
+                        <span className="text-xs font-bold">تحديد</span>
                     </button>
-                    <div className="w-px h-5 bg-border-default"></div>
+                    <div className="hidden sm:block w-px h-5 bg-border-default"></div>
                 </>
             )}
             {onPlayFrom && (
                 <>
                     <button 
                         onClick={() => { onPlayFrom(activePopover.ayah); onClose(); }} 
-                        className="p-2.5 rounded-xl text-text-subtle hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1.5 cursor-pointer" 
+                        className="p-1.5 sm:p-2.5 rounded-xl text-text-subtle hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1.5 cursor-pointer" 
                         title="استمرار التلاوة من هذه الآية"
                     >
                         <PlayIcon className="w-4 h-4 text-primary" />
-                        <span className="text-xs font-bold">تلاوة مستمرة</span>
+                        <span className="text-xs font-bold">تلاوة</span>
                     </button>
-                    <div className="w-px h-5 bg-border-default"></div>
+                    <div className="hidden sm:block w-px h-5 bg-border-default"></div>
                 </>
             )}
-            <button onClick={() => { onCopy(activePopover.ayah); }} className="p-2.5 rounded-xl text-text-subtle hover:bg-surface-hover hover:text-primary transition-colors flex items-center gap-1 cursor-pointer" title="نسخ الآية مع المرجع">
+            <button onClick={() => { onCopy(activePopover.ayah); }} className="p-1.5 sm:p-2.5 rounded-xl text-text-subtle hover:bg-surface-hover hover:text-primary transition-colors flex items-center gap-1 cursor-pointer" title="نسخ الآية مع المرجع">
               {copiedAyah === activePopover.ayah.number ? <CheckIcon className="w-4 h-4 text-green-500" /> : <CopyIcon className="w-4 h-4" />}
               <span className="text-xs font-semibold px-1">نسخ</span>
             </button>
-            <div className="w-px h-5 bg-border-default"></div>
-            <button onClick={() => { onSave(activePopover.ayah); }} className="p-2.5 rounded-xl text-text-subtle hover:bg-surface-hover hover:text-primary transition-colors flex items-center gap-1 cursor-pointer" title="حفظ الآية في دفتر التدبر">
+            <div className="hidden sm:block w-px h-5 bg-border-default"></div>
+            <button onClick={() => { onSave(activePopover.ayah); }} className="p-1.5 sm:p-2.5 rounded-xl text-text-subtle hover:bg-surface-hover hover:text-primary transition-colors flex items-center gap-1 cursor-pointer" title="حفظ الآية في دفتر التدبر">
               <BookmarkIcon className="w-4 h-4 text-primary" />
-              <span className="text-xs font-semibold px-1">حفظ في الدفتر</span>
+              <span className="text-xs font-semibold px-1">حفظ</span>
             </button>
         </div>,
         document.body
