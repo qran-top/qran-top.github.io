@@ -6,12 +6,18 @@ interface MushafPageViewProps {
   pageNumber: number;
   onPageChange: (newPage: number) => void;
   onWordClick?: (wordText: string, surahNum: number, ayahNum: number, wordIndex: number) => void;
+  isSelectionMode?: boolean;
+  selectedAyahKeys?: string[];
+  onAyahClick?: (e: React.MouseEvent, surahNum: number, ayahNum: number, text: string) => void;
 }
 
 export const MushafPageView: React.FC<MushafPageViewProps> = ({
   pageNumber,
   onPageChange,
-  onWordClick
+  onWordClick,
+  isSelectionMode,
+  selectedAyahKeys,
+  onAyahClick
 }) => {
   const [verses, setVerses] = useState<QuranV4Verse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -203,13 +209,20 @@ export const MushafPageView: React.FC<MushafPageViewProps> = ({
             >
               {groupedItems.map(({ word, verse, pauseMarks }, idx) => {
                 const isEnd = word.char_type_name === 'end';
+                const isSelected = selectedAyahKeys?.includes(verse.verse_key);
+
                 return (
                   <span 
                     key={word.id || idx}
-                    className="hover:text-amber-600 transition-colors cursor-pointer shrink-0 inline-flex items-baseline"
-                    onClick={() => {
+                    className={`hover:text-amber-600 transition-colors cursor-pointer shrink-0 inline-flex items-baseline ${isSelected ? 'bg-primary/20 dark:bg-primary/40 rounded' : ''}`}
+                    onClick={(e) => {
+                        const sNum = parseInt(verse.verse_key.split(':')[0], 10);
+                        if (isSelectionMode || e.ctrlKey || e.metaKey) {
+                            const fullText = verse.words.filter((w:any) => w.char_type_name === 'word').map((w:any) => w.text_uthmani).join(' ');
+                            if (onAyahClick) onAyahClick(e, sNum, verse.verse_number, fullText);
+                            return;
+                        }
                         if (onWordClick && word.char_type_name === 'word') {
-                            const sNum = parseInt(verse.verse_key.split(':')[0], 10);
                             onWordClick(word.text_uthmani, sNum, verse.verse_number, word.position);
                         }
                     }}

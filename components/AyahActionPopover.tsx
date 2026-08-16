@@ -13,7 +13,8 @@ const AyahActionPopover: React.FC<{
     onPlayFrom?: (ayah: Ayah) => void;
     onSaveStop?: (ayah: Ayah) => void;
     copiedAyah: number | null;
-}> = ({ activePopover, onClose, onSave, onCopy, onPlayFrom, copiedAyah }) => {
+    onStartSelection?: (ayah: Ayah) => void;
+}> = ({ activePopover, onClose, onSave, onCopy, onPlayFrom, copiedAyah, onStartSelection }) => {
     
     const popoverRef = useRef<HTMLDivElement>(null);
     const [style, setStyle] = useState<React.CSSProperties>({ opacity: 0, pointerEvents: 'none' });
@@ -59,6 +60,21 @@ const AyahActionPopover: React.FC<{
             role="dialog"
             aria-label="إجراءات الآية"
         >
+            {onStartSelection && (
+                <>
+                    <button 
+                        onClick={() => { onStartSelection(activePopover.ayah); onClose(); }} 
+                        className="p-2.5 rounded-xl text-text-subtle hover:bg-primary/10 hover:text-primary transition-colors flex items-center gap-1.5 cursor-pointer" 
+                        title="تحديد أكثر من آية للنسخ"
+                    >
+                        <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-xs font-bold">تحديد متعدد</span>
+                    </button>
+                    <div className="w-px h-5 bg-border-default"></div>
+                </>
+            )}
             {onPlayFrom && (
                 <>
                     <button 

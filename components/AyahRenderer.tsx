@@ -18,6 +18,9 @@ interface AyahRendererProps {
     playingAyahRef: React.RefObject<HTMLSpanElement>;
     highlightRef: React.RefObject<HTMLSpanElement>;
     firstAyahInfo: { bismillah: string; restOfAyah: string; } | null;
+    isSelectionMode?: boolean;
+    selectedAyahKeys?: string[];
+    onAyahClick?: (e: React.MouseEvent, surahNum: number, ayahNum: number, text: string, surahName: string) => void;
 }
 
 const cleanTajweedHtml = (html: string | undefined): string => {
@@ -63,7 +66,8 @@ const splitTajweedHtmlIntoWords = (html: string): string[] => {
 const AyahRenderer: React.FC<AyahRendererProps> = ({
     ayahsToRender, surah, highlightAyahNumber, onWordClick,
     currentlyPlayingAyahGlobalNumber, simpleCleanData, wordPopoverState, setWordPopoverState,
-    setActivePopover, playingAyahRef, highlightRef, firstAyahInfo
+    setActivePopover, playingAyahRef, highlightRef, firstAyahInfo,
+    isSelectionMode, selectedAyahKeys, onAyahClick
 }) => {
     
     // Consume Settings from Context
@@ -130,6 +134,14 @@ const AyahRenderer: React.FC<AyahRendererProps> = ({
     };
 
     const handleWordClickInternal = (event: React.MouseEvent<HTMLButtonElement>, word: string, wordIndex: number, ayahNumInSurah: number) => {
+        if (isSelectionMode || event.ctrlKey || event.metaKey) {
+            if (onAyahClick) {
+                const baseText = (ayahNumInSurah === 1 && firstAyahInfo) ? firstAyahInfo.restOfAyah : ayahsToRender.find(a => a.numberInSurah === ayahNumInSurah)?.text || '';
+                onAyahClick(event, surah.number, ayahNumInSurah, baseText, surah.name);
+            }
+            return;
+        }
+
         const cleanWord = word
             .replace(/<[^>]*>/g, '')
             .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '')
@@ -172,12 +184,14 @@ const AyahRenderer: React.FC<AyahRendererProps> = ({
                 // Clean trailing numbers/end markers from plain text to prevent duplicate numbers
                 const cleanedTextToDisplay = textToDisplay ? textToDisplay.replace(/[\s\u0660-\u0669\u06F0-\u06F9\u06DD\uFD3E\uFD3F]+$/, '').trim() : '';
 
+                const isSelected = selectedAyahKeys?.includes(`${surah.number}:${ayah.numberInSurah}`);
+
                 return (
                     <span key={ayah.number} className="inline">
                         <span
                             id={`ayah-${surah.number}-${ayah.numberInSurah}`}
                             ref={isPlaying ? playingAyahRef : (isHighlighted ? highlightRef : null)}
-                            className={`inline rounded-md transition-colors duration-300 ${isPlaying ? 'bg-yellow-300/60 dark:bg-yellow-400/30' : ''}`}
+                            className={`inline rounded-md transition-colors duration-300 ${isPlaying ? 'bg-yellow-300/60 dark:bg-yellow-400/30' : ''} ${isSelected ? 'bg-primary/20 dark:bg-primary/40' : ''}`}
                         >
                             {/* If Tajweed is enabled and v4 tajweed data is loaded */}
                             {enableTajweed && tajweedVerse && tajweedVerse.text_uthmani_tajweed ? (
@@ -227,7 +241,16 @@ const AyahRenderer: React.FC<AyahRendererProps> = ({
 
                         <span className="relative inline-block align-middle">
                             <button
-                                onClick={(e) => setActivePopover({ ayah: ayah, triggerElement: e.currentTarget })}
+                                onClick={(e) => {
+                                    if (isSelectionMode || e.ctrlKey || e.metaKey) {
+                                        if (onAyahClick) {
+                                            const baseText = (ayah.numberInSurah === 1 && firstAyahInfo) ? firstAyahInfo.restOfAyah : ayah.text || '';
+                                            onAyahClick(e, surah.number, ayah.numberInSurah, baseText, surah.name);
+                                        }
+                                        return;
+                                    }
+                                    setActivePopover({ ayah: ayah, triggerElement: e.currentTarget });
+                                }}
                                 className={`popover-trigger mx-1 select-none cursor-pointer hover:opacity-80 transition-opacity ${browsingMode === 'page' ? 'ayah-marker' : 'text-sm font-sans font-bold text-primary-text rounded-md p-1 -m-1'}`}
                                 aria-label={`إجراءات للآية ${ayah.numberInSurah}`}
                                 aria-haspopup="true"

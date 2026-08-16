@@ -1,7 +1,7 @@
 import { MushafPageView } from "./MushafPageView";
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import type { SurahData, SavedAyahItem, Ayah } from '../types';
-import { SpinnerIcon, ArrowLeftIcon, ArrowRightIcon } from './icons';
+import { SpinnerIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, CopyIcon } from './icons';
 import { safeLocalStorage } from '../utils/storage';
 import AyahActionPopover from './AyahActionPopover';
 import AyahRenderer from './AyahRenderer';
@@ -119,6 +119,51 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
   const [activePopover, setActivePopover] = useState<{ ayah: Ayah; triggerElement: HTMLElement } | null>(null);
   const [copiedAyah, setCopiedAyah] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  
+  const [selectedAyahs, setSelectedAyahs] = useState<{surahNum: number, ayahNum: number, text: string, surahName: string}[]>([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showMultiCopyToast, setShowMultiCopyToast] = useState(false);
+  const selectedAyahKeys = useMemo(() => selectedAyahs.map(a => `${a.surahNum}:${a.ayahNum}`), [selectedAyahs]);
+
+  const handleAyahSelection = (e: React.MouseEvent, surahNum: number, ayahNum: number, text: string, surahName: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (!isSelectionMode) setIsSelectionMode(true);
+      
+      setSelectedAyahs(prev => {
+          const existsIndex = prev.findIndex(a => a.surahNum === surahNum && a.ayahNum === ayahNum);
+          if (existsIndex >= 0) {
+              const newArr = [...prev];
+              newArr.splice(existsIndex, 1);
+              if (newArr.length === 0) setIsSelectionMode(false);
+              return newArr;
+          } else {
+              return [...prev, {surahNum, ayahNum, text, surahName}];
+          }
+      });
+  };
+
+  const handleCopyMultiple = () => {
+      if (selectedAyahs.length === 0) return;
+      const textToCopy = selectedAyahs.map(a => {
+          const isImlaei = fontStyle === 'imlai_1' || fontStyle === 'imlai_2';
+          let ayahText = a.text || '';
+          if (isImlaei) {
+              const marksToRemoveRegex = /[\u06D6-\u06ED]/g;
+              ayahText = ayahText.replace(marksToRemoveRegex, '');
+          }
+          const cleanSurahName = formatSurahNameForDisplay(a.surahName);
+          return `"${ayahText}" (سورة ${cleanSurahName} - الآية ${a.ayahNum})`;
+      }).join('\n\n');
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+          setShowMultiCopyToast(true);
+          setTimeout(() => setShowMultiCopyToast(false), 3000);
+          setIsSelectionMode(false);
+          setSelectedAyahs([]);
+      });
+  };
   
   const [wordPopoverState, setWordPopoverState] = useState<{
     ayahNumberInSurah: number;
@@ -625,6 +670,12 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
               onWordClick={(wordText, surahNum, ayahNum, wordIndex) => {
                 onWordClick(wordText, 'quran-simple-clean', { surah: surahNum, ayah: ayahNum, wordIndex });
               }}
+              isSelectionMode={isSelectionMode}
+              selectedAyahKeys={selectedAyahKeys}
+              onAyahClick={(e, surahNum, ayahNum, text) => {
+                 const sName = QURAN_INDEX.find(s => s.number === surahNum)?.name || '';
+                 handleAyahSelection(e, surahNum, ayahNum, text, sName);
+              }}
             />
           ) : (
              <div>
@@ -688,6 +739,9 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
                                         playingAyahRef={playingAyahRef} 
                                         highlightRef={highlightRef} 
                                         firstAyahInfo={null} // Bismillah handled above
+                                        isSelectionMode={isSelectionMode}
+                                        selectedAyahKeys={selectedAyahKeys}
+                                        onAyahClick={handleAyahSelection}
                                     />
                                 </React.Fragment>
                             );
@@ -761,6 +815,9 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
                                     playingAyahRef={playingAyahRef} 
                                     highlightRef={highlightRef} 
                                     firstAyahInfo={null}
+                                    isSelectionMode={isSelectionMode}
+                                    selectedAyahKeys={selectedAyahKeys}
+                                    onAyahClick={handleAyahSelection}
                                 />
                             </div>
                         </div>
@@ -839,7 +896,37 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
             onPlayFrom={handlePlayFromAyah}
             onSaveStop={handleSaveReadingStop}
             copiedAyah={copiedAyah}
+            onStartSelection={(ayah) => {
+                const sName = ayah.surah?.name || surah.name;
+                handleAyahSelection({ preventDefault: () => {}, stopPropagation: () => {} } as React.MouseEvent, surah.number, ayah.numberInSurah, ayah.text || '', sName);
+            }}
         />
+      )}
+
+      {/* Floating Selection Bar */}
+      {isSelectionMode && selectedAyahs.length > 0 && (
+          <div className="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-2 bg-surface p-2 sm:p-3 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-primary/20 animate-fade-in-up">
+              <div className="text-center font-bold text-sm text-primary mb-1">
+                  {selectedAyahs.length}
+                  <span className="block text-[10px] text-text-secondary">آيات</span>
+              </div>
+              <button 
+                  onClick={handleCopyMultiple} 
+                  className="p-3 sm:p-4 bg-primary text-primary-content rounded-xl hover:bg-primary-hover hover:scale-105 transition-all shadow-md flex flex-col items-center gap-1"
+                  title="نسخ الآيات المحددة"
+              >
+                  <CopyIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="text-xs font-bold text-white">نسخ</span>
+              </button>
+          </div>
+      )}
+
+      {/* Toast Notification */}
+      {showMultiCopyToast && (
+          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-fade-in pointer-events-none">
+              <CheckIcon className="w-5 h-5" />
+              <span className="font-bold text-sm">تم نسخ الآيات المحددة بنجاح</span>
+          </div>
       )}
 
     </div>
