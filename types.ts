@@ -112,3 +112,26 @@ export type BrowsingMode = 'full' | 'page';
 export type FontStyleType = 'imlai_1' | 'imlai_2' | 'uthmani' | 'mushaf';
 export type PlaybackMode = 'continuous' | 'single' | 'selection_juz' | 'selection_surah';
 export type WordClickBehavior = 'auto' | 'direct_search' | 'show_menu';
+
+// --- Types for Group Khatmah (الختمة الجماعية) ---
+export interface KhatmahPart {
+  partNumber: number; // 1 to 30
+  status: 'available' | 'reserved' | 'completed';
+  reservedBy?: string;
+  reservedAt?: number; // timestamp
+  completedBy?: string;
+  completedAt?: number; // timestamp
+}
+
+export interface GroupKhatmah {
+  id: string; // short unique code e.g. "KHT-8291"
+  title: string; // e.g. "ختمة المرحوم فلان"
+  dedication?: string; // e.g. "بنية الشفاء / عن روح..."
+  targetDate?: string; // YYYY-MM-DD
+  createdBy?: string;
+  createdAt: number;
+  isCompleted: boolean;
+  completedAt?: number;
+  parts: Record<number, KhatmahPart>;
+}
+

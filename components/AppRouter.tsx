@@ -11,6 +11,7 @@ import PrivacyPolicyView from './PrivacyPolicyView';
 import LoadingScreen from './LoadingScreen';
 import AboutView from './AboutView';
 import HistoryView from './HistoryView';
+import GroupKhatmahView from './khatmiyah/GroupKhatmahView';
 
 import { QURAN_INDEX } from '../quranIndex';
 import { JUZ_INDEX, HIZB_INDEX } from '../quranPartitions';
@@ -82,6 +83,14 @@ const AppRouter: React.FC<AppRouterProps> = (props) => {
         onExportNotebook={handleExportNotebook} 
         onImportNotebook={handleImportNotebook}
     />;
+    if (pathParts[0] === 'khatmah' || pathParts[0] === 'khatmiyah') {
+        return <GroupKhatmahView 
+            initialKhatmahId={pathParts[1]} 
+            onNavigateToJuz={(surah, ayah) => {
+                window.location.hash = `#/surah/${surah}?ayah=${ayah}`;
+            }} 
+        />;
+    }
     if (pathParts[0] === 'about') return <AboutView />;
     if (pathParts[0] === 'privacy-policy') return <PrivacyPolicyView />;
     
