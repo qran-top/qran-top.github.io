@@ -616,6 +616,16 @@ export const khatmahService = {
   // List all khatmahs globally
   async listRecentKhatmahs(): Promise<GroupKhatmah[]> {
     const workerUrl = getCloudflareWorkerUrl();
+    const mergedMap = new Map<string, GroupKhatmah>();
+
+    // 0. Seed with existing local data
+    const existingLocal = getLocalKhatmahs();
+    Object.values(existingLocal).forEach(k => {
+      if (isRealKhatmah(k)) {
+        k.parts = normalizeKhatmahParts(k.parts);
+        mergedMap.set(k.id, checkAndRenewMonthlyKhatmah(k));
+      }
+    });
 
     // 1. Direct Cloudflare Worker KV
     if (workerUrl) {
@@ -626,20 +636,13 @@ export const khatmahService = {
         if (res.ok) {
           const list = await res.json();
           if (Array.isArray(list)) {
-            const local: Record<string, GroupKhatmah> = {};
-            const uniqueMap = new Map<string, GroupKhatmah>();
-            list.forEach((k: GroupKhatmah) => {
+            list.forEach((k: any) => {
               if (isRealKhatmah(k)) {
                 k.parts = normalizeKhatmahParts(k.parts);
                 const renewed = checkAndRenewMonthlyKhatmah(k);
-                local[renewed.id] = renewed;
-                uniqueMap.set(renewed.id, renewed);
+                mergedMap.set(renewed.id, renewed);
               }
             });
-            saveLocalKhatmahs(local);
-            return Array.from(uniqueMap.values()).sort(
-              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            );
           }
         }
       } catch (err) {
@@ -647,39 +650,36 @@ export const khatmahService = {
       }
     }
 
-    // 2. Server API fallback
+    // 2. Server API fallback / augmentation
     try {
       const res = await fetch('/api/khatmah');
       if (res.ok) {
         const list = await res.json();
         if (Array.isArray(list)) {
-          const local: Record<string, GroupKhatmah> = {};
-          const uniqueMap = new Map<string, GroupKhatmah>();
-          list.forEach((k: GroupKhatmah) => {
+          list.forEach((k: any) => {
             if (isRealKhatmah(k)) {
               k.parts = normalizeKhatmahParts(k.parts);
               const renewed = checkAndRenewMonthlyKhatmah(k);
-              local[renewed.id] = renewed;
-              uniqueMap.set(renewed.id, renewed);
+              mergedMap.set(renewed.id, renewed);
             }
           });
-          saveLocalKhatmahs(local);
-          return Array.from(uniqueMap.values()).sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
         }
       }
     } catch (err) {
-      // Fallback
+      // Ignore
     }
 
-    // 3. Fallback to local
-    const local = getLocalKhatmahs();
-    const list = Object.values(local).filter(isRealKhatmah).map(k => {
-      k.parts = normalizeKhatmahParts(k.parts);
-      return k;
+    // Persist full merged list back to localStorage
+    const localToSave: Record<string, GroupKhatmah> = {};
+    mergedMap.forEach((v, k) => {
+      localToSave[k] = v;
     });
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    saveLocalKhatmahs(localToSave);
+
+    const resultList = Array.from(mergedMap.values());
+    return resultList.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   },
 
   // Clear all khatmahs everywhere

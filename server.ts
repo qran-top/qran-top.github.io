@@ -28,11 +28,9 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  // Initialize storage & wipe all old test khatmahs completely
-  clearAllBackendKhatmahs().then(() => {
-    console.log('🧹 All old khatmahs cleared from backend & KV.');
-  }).catch(err => {
-    console.error('Initial storage clear error:', err);
+  // Initialize storage on startup
+  initBackendStorage().catch(err => {
+    console.error('Initial storage init error:', err);
   });
 
   // ==========================================

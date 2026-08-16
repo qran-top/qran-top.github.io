@@ -591,7 +591,17 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
               <span>📋</span>
               <span>الختمات القرآنية ({uniqueKhatmahsList.length})</span>
             </h2>
-            <span className="text-xs text-text-muted">اضغط على أي ختمة لاختيار وحجز الأجزاء</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => loadKhatmahsList(false)}
+                className="px-2.5 py-1 text-xs bg-surface-subtle hover:bg-surface-hover border border-border-default rounded-xl font-bold text-text-secondary hover:text-text-primary transition-all flex items-center gap-1"
+                title="تحديث قائمة الختمات"
+              >
+                <span>🔄</span>
+                <span>تحديث</span>
+              </button>
+              <span className="text-xs text-text-muted hidden sm:inline">اضغط على أي ختمة لاختيار وحجز الأجزاء</span>
+            </div>
           </div>
 
           {isLoading ? (

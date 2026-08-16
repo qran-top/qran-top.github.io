@@ -122,9 +122,49 @@ export default {
       if (method === 'GET' && (path === '/api/khatmahs' || path === '/api/khatmah')) {
         if (kv) {
           const indexStr = await kv.get('khatmahs_index');
-          let list = indexStr ? JSON.parse(indexStr) : [];
-          list = list.filter(isRealKhatmah);
-          return jsonResponse(list);
+          let rawList = [];
+          if (indexStr) {
+            try { rawList = JSON.parse(indexStr); } catch (e) {}
+          }
+
+          const finalList = [];
+          const seenIds = new Set();
+
+          for (const item of rawList) {
+            if (typeof item === 'object' && item && item.id && isRealKhatmah(item)) {
+              if (!seenIds.has(item.id)) {
+                seenIds.add(item.id);
+                finalList.push(await checkAndRenewMonthly(item));
+              }
+            } else if (typeof item === 'string') {
+              const id = item.toUpperCase();
+              if (isRealKhatmah({ id }) && !seenIds.has(id)) {
+                const kData = await getKhatmahData(id);
+                if (kData) {
+                  seenIds.add(kData.id);
+                  finalList.push(kData);
+                }
+              }
+            }
+          }
+
+          // If index was empty, scan KV keys directly
+          if (finalList.length === 0) {
+            const listRes = await kv.list({ prefix: 'khatmah:' });
+            for (const key of listRes.keys) {
+              const id = key.name.replace('khatmah:', '').toUpperCase();
+              if (isRealKhatmah({ id }) && !seenIds.has(id)) {
+                const kData = await getKhatmahData(id);
+                if (kData) {
+                  seenIds.add(kData.id);
+                  finalList.push(kData);
+                }
+              }
+            }
+          }
+
+          finalList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          return jsonResponse(finalList);
         }
         return jsonResponse([]);
       }
