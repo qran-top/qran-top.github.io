@@ -1,23 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { GroupKhatmah, KhatmahPart } from '../../types';
-import { khatmahService, getCloudflareWorkerUrl } from '../../services/khatmahService';
+import { khatmahService } from '../../services/khatmahService';
 import { JUZ_INDEX } from '../../quranPartitions';
 import {
-  BookOpenIcon,
   CheckIcon,
-  ClearIcon,
   PlusIcon,
-  RefreshIcon,
   CopyIcon,
-  CogIcon,
   WhatsAppIcon,
   TelegramIcon,
-  ArrowRightIcon
 } from '../icons';
 import CreateKhatmahModal from './CreateKhatmahModal';
 import ReserveJuzModal from './ReserveJuzModal';
 import PartActionModal from './PartActionModal';
-import CloudflareSetupModal from './CloudflareSetupModal';
 import DuaaKhatmModal from './DuaaKhatmModal';
 import { useSettingsContext } from '../../contexts/SettingsContext';
 
@@ -73,13 +67,11 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
   const [khatmah, setKhatmah] = useState<GroupKhatmah | null>(null);
   const [khatmahsList, setKhatmahsList] = useState<GroupKhatmah[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isCloudflareModalOpen, setIsCloudflareModalOpen] = useState(false);
   const [isDuaaModalOpen, setIsDuaaModalOpen] = useState(false);
   const [reservingPartNumber, setReservingPartNumber] = useState<number | null>(null);
   const [selectedPartForAction, setSelectedPartForAction] = useState<number | null>(null);
@@ -109,7 +101,6 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
       if (!silent) setError('تعذر تحميل بيانات الختمة. تحقق من الاتصال.');
     } finally {
       if (!silent) setIsLoading(false);
-      setIsRefreshing(false);
     }
   }, []);
 
@@ -125,38 +116,22 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
       return [];
     } finally {
       if (!silent) setIsLoading(false);
-      setIsRefreshing(false);
     }
   }, []);
 
   // Initial load
   useEffect(() => {
     const init = async () => {
-      const list = await loadKhatmahsList(true);
-
-      // If URL has a specific ID, load that Khatmah
+      await loadKhatmahsList(true);
       if (currentKhatmahId) {
         await loadKhatmahData(currentKhatmahId);
-      } else {
-        // If there are no khatmahs at all, create a default first one
-        if (list.length === 0) {
-          try {
-            const defaultK = await khatmahService.createKhatmah({
-              title: 'الختمة المباركة الأولى',
-              dedication: 'ختمة قرآنية جماعية للبركة والمغفرة',
-            });
-            await loadKhatmahsList(true);
-          } catch (e) {
-            console.error('Error creating default khatmah', e);
-          }
-        }
-        setIsLoading(false);
       }
+      setIsLoading(false);
     };
     init();
   }, [currentKhatmahId, loadKhatmahData, loadKhatmahsList]);
 
-  // Real-time live polling & sync
+  // Real-time live polling & sync (auto updates without manual refresh button)
   useEffect(() => {
     const unsubscribe = khatmahService.onSync(() => {
       if (currentKhatmahId) {
@@ -171,7 +146,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
       } else {
         loadKhatmahsList(true);
       }
-    }, 4500);
+    }, 4000);
 
     return () => {
       unsubscribe();
@@ -255,6 +230,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
     dedication?: string;
     targetDate?: string;
     createdBy?: string;
+    khatmahType?: 'once' | 'monthly_recurring';
   }) => {
     const created = await khatmahService.createKhatmah(params);
     setCurrentKhatmahId(created.id);
@@ -332,7 +308,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
     }
   };
 
-  // Share helpers
+  // Share helpers with Program Name: "الباحث في القرآن الكريم"
   const getShareUrl = (khatmahId?: string) => {
     const origin = window.location.origin + window.location.pathname;
     if (khatmahId) {
@@ -345,18 +321,23 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
   };
 
   const handleCopyLink = async (targetId?: string) => {
+    const k = (targetId && uniqueKhatmahsList.find(item => item.id === targetId)) || khatmah;
     const url = getShareUrl(targetId);
+    const textToCopy = k
+      ? `🌿 دعوة للمشاركة في ختمة قرآنية مباركة: "${k.title}"${k.dedication ? `\n🕊️ الإهداء: ${k.dedication}` : ''}\n📱 تطبيق الباحث في القرآن الكريم - QRAN.TOP\nشاركنا الأجر واختر جزءك عبر الرابط:\n${url}`
+      : `🌿 الختمات القرآنية الجماعية - برنامج الباحث في القرآن الكريم (QRAN.TOP)\n${url}`;
+
     try {
-      await navigator.clipboard.writeText(url);
-      showToast('تم نسخ الرابط بنجاح!');
+      await navigator.clipboard.writeText(textToCopy);
+      showToast('تم نسخ رابط الختمة بنجاح!');
     } catch {
       const input = document.createElement('input');
-      input.value = url;
+      input.value = textToCopy;
       document.body.appendChild(input);
       input.select();
       document.execCommand('copy');
       document.body.removeChild(input);
-      showToast('تم نسخ الرابط بنجاح!');
+      showToast('تم نسخ رابط الختمة بنجاح!');
     }
   };
 
@@ -365,11 +346,11 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
     const url = getShareUrl(k?.id);
     let text = '';
     if (k) {
-      text = `🌿 *دعوة للمشاركة في ختمة قرآنية جماعية*\n📖 *${k.title}*${
+      text = `🌿 *دعوة للمشاركة في ختمة قرآنية مباركة*\n📖 *${k.title}*${
         k.dedication ? `\n🕊️ *الإهداء:* ${k.dedication}` : ''
-      }\n\nشاركنا الأجر واختر جزءك الآن عبر الرابط:\n${url}`;
+      }\n\n📱 *برنامج الباحث في القرآن الكريم (QRAN.TOP)*\nشاركنا الأجر واختر جزءك الآن عبر الرابط المباشر:\n${url}`;
     } else {
-      text = `🌿 *ختمة القرآن الكريم الجماعية*\nشاركنا قراءة وختم القرآن الكريم وتوزيع الأجزاء عبر الرابط:\n${url}`;
+      text = `🌿 *ختمة القرآن الكريم الجماعية*\n📱 *برنامج الباحث في القرآن الكريم (QRAN.TOP)*\nشاركنا قراءة وختم القرآن الكريم وتوزيع الأجزاء عبر الرابط:\n${url}`;
     }
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(waUrl, '_blank');
@@ -380,11 +361,11 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
     const url = getShareUrl(k?.id);
     let text = '';
     if (k) {
-      text = `🌿 دعوة للمشاركة في ختمة قرآنية جماعية: ${k.title}${
+      text = `🌿 دعوة للمشاركة في ختمة قرآنية مباركة: ${k.title}${
         k.dedication ? ` (${k.dedication})` : ''
-      }\nشاركنا الأجر واحجز جزءك الآن`;
+      }\nبرنامج الباحث في القرآن الكريم - QRAN.TOP\nاختر جزءك وشاركنا الأجر عبر الرابط:\n${url}`;
     } else {
-      text = `🌿 ختمة القرآن الكريم الجماعية - شاركنا الأجر وختم القرآن الكريم`;
+      text = `🌿 ختمة القرآن الكريم الجماعية - برنامج الباحث في القرآن الكريم (QRAN.TOP)\n${url}`;
     }
     const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
     window.open(tgUrl, '_blank');
@@ -408,12 +389,13 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
   // Start new cycle for completed Khatmah
   const handleStartNewCycle = async () => {
     if (!khatmah) return;
-    const nextTitle = `${khatmah.title} (الدورة الجديدة)`;
-    await handleCreateKhatmah({
-      title: nextTitle,
-      dedication: khatmah.dedication,
-      createdBy: khatmah.createdBy,
-    });
+    try {
+      const reset = await khatmahService.resetKhatmahCycle(khatmah.id);
+      setKhatmah(reset);
+      showToast('تم بدء دورة جديدة لهذه الختمة بنجاح!');
+    } catch (err: any) {
+      alert(err?.message || 'حدث خطأ أثناء تجديد الدورة');
+    }
   };
 
   // Part Box Click Handler
@@ -427,8 +409,6 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
     }
   };
 
-  const hasCloudflareWorker = !!getCloudflareWorkerUrl();
-
   return (
     <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-4 animate-fade-in space-y-6 pb-20">
       {/* Toast Notification */}
@@ -439,7 +419,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
         </div>
       )}
 
-      {/* TOP HEADER & UNIVERSAL SHARING TOOLBAR (Always Available) */}
+      {/* TOP HEADER & SHARING TOOLBAR */}
       <div className="bg-surface border border-border-default rounded-3xl p-4 sm:p-5 shadow-sm overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           
@@ -448,24 +428,24 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
             {currentKhatmahId && (
               <button
                 onClick={handleBackToAllKhatmahs}
-                className="p-2 bg-surface-subtle hover:bg-surface-hover border border-border-default text-text-primary rounded-xl transition-all flex items-center gap-1 text-xs font-bold"
-                title="الرجوع إلى قائمة الختمات المتاحة"
+                className="p-2.5 bg-surface-subtle hover:bg-surface-hover border border-border-default text-text-primary rounded-2xl transition-all flex items-center gap-1.5 text-xs font-bold"
+                title="الرجوع إلى قائمة كافة الختمات"
               >
                 <span>←</span>
-                <span className="hidden sm:inline">كافة الختمات</span>
+                <span>كافة الختمات</span>
               </button>
             )}
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <span className="text-2xl sm:text-3xl">📖</span>
               <div>
                 <h1 className="text-lg sm:text-xl font-black text-text-primary">
-                  {currentKhatmahId ? 'الختمة الجماعية' : 'الختمات الجماعية المتاحة'}
+                  {currentKhatmahId ? 'الختمة القرآنية المباركة' : 'الختمات القرآنية الجماعية'}
                 </h1>
                 <p className="text-xs text-text-muted">
                   {currentKhatmahId
-                    ? 'اختر جزءك واحجزه أو أكده بضغطة واحدة'
-                    : 'اختر ختمة للمشاركة فيها أو أنشئ ختمة جديدة'}
+                    ? 'اختر رقم الجزء للحجز أو تسجيل القراءة'
+                    : 'شارك في ختمة قائمة أو أنشئ ختمة خاصة بالأهل والأصدقاء'}
                 </p>
               </div>
             </div>
@@ -476,7 +456,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
             {/* Create New Khatmah */}
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold rounded-2xl shadow-sm transition-all flex items-center gap-1.5"
             >
               <PlusIcon className="w-4 h-4" />
               <span>إنشاء ختمة جديدة</span>
@@ -485,7 +465,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
             {/* Copy Share Link */}
             <button
               onClick={() => handleCopyLink()}
-              className="px-3 py-2 bg-surface-subtle hover:bg-surface-hover border border-border-default text-text-primary text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5"
+              className="px-3.5 py-2.5 bg-surface-subtle hover:bg-surface-hover border border-border-default text-text-primary text-xs sm:text-sm font-bold rounded-2xl transition-all flex items-center gap-1.5"
               title="نسخ الرابط للمشاركة"
             >
               <CopyIcon className="w-4 h-4 text-primary" />
@@ -495,7 +475,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
             {/* WhatsApp Share */}
             <button
               onClick={() => handleWhatsAppShare()}
-              className="px-3 py-2 bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#25D366] text-xs sm:text-sm font-bold rounded-xl border border-[#25D366]/30 transition-all flex items-center gap-1.5"
+              className="px-3.5 py-2.5 bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#25D366] text-xs sm:text-sm font-bold rounded-2xl border border-[#25D366]/30 transition-all flex items-center gap-1.5"
               title="مشاركة عبر واتساب"
             >
               <WhatsAppIcon className="w-4 h-4" />
@@ -505,52 +485,27 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
             {/* Telegram Share */}
             <button
               onClick={() => handleTelegramShare()}
-              className="px-3 py-2 bg-[#0088cc]/15 hover:bg-[#0088cc]/25 text-[#0088cc] text-xs sm:text-sm font-bold rounded-xl border border-[#0088cc]/30 transition-all flex items-center gap-1.5"
+              className="px-3.5 py-2.5 bg-[#0088cc]/15 hover:bg-[#0088cc]/25 text-[#0088cc] text-xs sm:text-sm font-bold rounded-2xl border border-[#0088cc]/30 transition-all flex items-center gap-1.5"
               title="مشاركة عبر تيليجرام"
             >
               <TelegramIcon className="w-4 h-4" />
               <span>تيليجرام</span>
-            </button>
-
-            {/* Refresh */}
-            <button
-              onClick={() => {
-                setIsRefreshing(true);
-                if (currentKhatmahId) {
-                  loadKhatmahData(currentKhatmahId);
-                }
-                loadKhatmahsList();
-              }}
-              disabled={isRefreshing}
-              className="p-2 text-text-muted hover:text-text-primary bg-surface-subtle hover:bg-surface-hover border border-border-default rounded-xl transition-colors"
-              title="تحديث البيانات"
-            >
-              <RefreshIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
-            </button>
-
-            {/* Cloudflare settings */}
-            <button
-              onClick={() => setIsCloudflareModalOpen(true)}
-              className="p-2 text-text-muted hover:text-text-primary bg-surface-subtle hover:bg-surface-hover border border-border-default rounded-xl transition-colors"
-              title="إعدادات الربط السحابي (Cloudflare)"
-            >
-              <CogIcon className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* VIEW 1: ALL AVAILABLE KHATMAHS (Main Hub - No parts shown until clicked) */}
+      {/* VIEW 1: ALL AVAILABLE KHATMAHS (Main Hub) */}
       {/* ========================================================================= */}
       {!currentKhatmahId && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base sm:text-lg font-black text-text-primary flex items-center gap-2">
               <span>📋</span>
-              <span>الختمات القرآنية المتاحة ({uniqueKhatmahsList.length})</span>
+              <span>الختمات القرآنية ({uniqueKhatmahsList.length})</span>
             </h2>
-            <span className="text-xs text-text-muted">اضغط على أي ختمة لعرض وحجز الأجزاء</span>
+            <span className="text-xs text-text-muted">اضغط على أي ختمة لاختيار وحجز الأجزاء</span>
           </div>
 
           {isLoading ? (
@@ -559,17 +514,18 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
               <p className="text-sm font-semibold text-text-secondary">جاري تحميل الختمات المتاحة...</p>
             </div>
           ) : uniqueKhatmahsList.length === 0 ? (
-            <div className="p-8 bg-surface border border-border-default rounded-3xl text-center space-y-4">
-              <span className="text-4xl">🌿</span>
-              <h3 className="text-base font-bold text-text-primary">لا توجد ختمات متاحة حالياً</h3>
-              <p className="text-xs text-text-muted max-w-sm mx-auto">
-                كن أول من ينشئ ختمة قرآنية مباركة وشاركها مع الأهل والأصدقاء لنيل الأجر والثواب.
+            <div className="p-8 sm:p-12 bg-surface border border-border-default rounded-3xl text-center space-y-4 shadow-sm">
+              <span className="text-5xl">🌿</span>
+              <h3 className="text-lg font-bold text-text-primary">لا توجد ختمات حالياً</h3>
+              <p className="text-sm text-text-muted max-w-md mx-auto leading-relaxed">
+                كن أول من ينال الأجر ويبدأ ختمة قرآنية جديدة لمشاركتها مع الأهل والأصدقاء
               </p>
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-2xl shadow-sm transition-all"
+                className="px-6 py-2.5 bg-primary text-white font-bold rounded-2xl shadow hover:bg-primary/90 transition-all inline-flex items-center gap-2 text-sm"
               >
-                + إنشاء أول ختمة مباركة
+                <PlusIcon className="w-4 h-4" />
+                <span>إنشاء أول ختمة الآن</span>
               </button>
             </div>
           ) : (
@@ -577,6 +533,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
               {uniqueKhatmahsList.map((k, idx) => {
                 const prog = getKhatmahProgress(k);
                 const isDone = k.isCompleted || prog.percent === 100;
+                const isPeriodic = k.khatmahType === 'monthly_recurring';
 
                 return (
                   <div
@@ -584,39 +541,41 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
                     className="bg-surface border border-border-default hover:border-primary rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 cursor-pointer relative group"
                     onClick={() => handleOpenKhatmah(k.id)}
                   >
-                    {/* Top Row: Title, ID, Status */}
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-mono font-bold border border-primary/20">
-                          {k.id}
-                        </span>
-
-                        {isDone ? (
-                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/30 flex items-center gap-1">
-                            <CheckIcon className="w-3.5 h-3.5" />
-                            مكتملة
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 text-xs font-bold border border-amber-500/30">
-                            جارية
-                          </span>
-                        )}
+                    {/* Header: Title & Badges */}
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-base font-black text-text-primary group-hover:text-primary transition-colors line-clamp-1">
+                          {k.title}
+                        </h3>
+                        <div className="flex items-center gap-1">
+                          {isPeriodic && (
+                            <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-700 dark:text-purple-300 text-[10px] font-bold border border-purple-500/20 whitespace-nowrap">
+                              🔄 دورية شهرية
+                            </span>
+                          )}
+                          {isDone ? (
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold flex items-center gap-1">
+                              <CheckIcon className="w-3 h-3" />
+                              مكتملة
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-md bg-surface-subtle text-text-muted text-[10px] font-mono border border-border-default">
+                              {k.id}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      <h3 className="text-base sm:text-lg font-black text-text-primary group-hover:text-primary transition-colors line-clamp-1">
-                        {k.title}
-                      </h3>
-
                       {k.dedication && (
-                        <p className="text-xs text-text-secondary mt-1 line-clamp-2 flex items-start gap-1">
-                          <span className="text-xs mt-0.5">🕊️</span>
+                        <p className="text-xs text-text-secondary line-clamp-1 flex items-center gap-1">
+                          <span>🕊️</span>
                           <span>{k.dedication}</span>
                         </p>
                       )}
 
-                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-text-muted mt-2">
-                        {k.createdBy && <span>المنشئ: {k.createdBy}</span>}
-                        {k.targetDate && <span>الموعد: {k.targetDate}</span>}
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-text-muted pt-1">
+                        {k.createdBy && <span>منشئ الختمة: {k.createdBy}</span>}
+                        {k.targetDate && <span>موعد الختم: {k.targetDate}</span>}
                       </div>
                     </div>
 
@@ -627,7 +586,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
                           الإنجاز: <span className="text-primary font-mono">{prog.percent}%</span>
                         </span>
                         <span className="text-text-muted text-[11px]">
-                          {prog.completed} من 30 جزء مكتمل
+                          {prog.completed} من 30 جزء
                         </span>
                       </div>
 
@@ -642,9 +601,9 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
                         ></div>
                       </div>
 
-                      <div className="flex items-center justify-between text-[11px] font-semibold text-text-muted pt-1">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-text-muted pt-0.5">
                         <span className="text-emerald-600 dark:text-emerald-400">
-                          ✓ {prog.completed} مكتمل
+                          ✓ {prog.completed} مقروء
                         </span>
                         <span className="text-amber-600 dark:text-amber-400">
                           ⏳ {prog.reserved} محجوز
@@ -688,9 +647,9 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
                       {/* Primary Open Button */}
                       <button
                         onClick={() => handleOpenKhatmah(k.id)}
-                        className="px-3.5 py-2 bg-primary/10 hover:bg-primary text-primary hover:text-white text-xs font-bold rounded-xl border border-primary/25 transition-all flex items-center gap-1"
+                        className="px-3.5 py-1.5 bg-primary/10 hover:bg-primary text-primary hover:text-white text-xs font-bold rounded-xl border border-primary/25 transition-all flex items-center gap-1"
                       >
-                        <span>فتح الأجزاء</span>
+                        <span>عرض الأجزاء</span>
                         <span>←</span>
                       </button>
                     </div>
@@ -703,7 +662,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* VIEW 2: SPECIFIC KHATMAH DETAILS & 30 JUZ BOXES GRID */}
+      {/* VIEW 2: SPECIFIC KHATMAH DETAILS & 30 JUZ NUMBERS GRID */}
       {/* ========================================================================= */}
       {currentKhatmahId && (
         <div className="space-y-6">
@@ -712,14 +671,19 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
             <div className="bg-surface border border-border-default rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-mono font-bold border border-primary/20">
                       {khatmah.id}
                     </span>
+                    {khatmah.khatmahType === 'monthly_recurring' && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300 text-xs font-bold border border-purple-500/25">
+                        🔄 دورية شهرية (الدورة {khatmah.cycleNumber || 1})
+                      </span>
+                    )}
                     <h2 className="text-xl sm:text-2xl font-black text-text-primary">{khatmah.title}</h2>
                   </div>
                   {khatmah.dedication && (
-                    <p className="text-sm text-text-secondary mt-1 flex items-center gap-1.5">
+                    <p className="text-sm text-text-secondary mt-1.5 flex items-center gap-1.5">
                       <span>🕊️</span>
                       <span>{khatmah.dedication}</span>
                     </p>
@@ -729,7 +693,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
                     {khatmah.targetDate && <span>موعد الختم: {khatmah.targetDate}</span>}
                     <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                      <span>{hasCloudflareWorker ? 'سحابية (Cloudflare)' : 'مزامنة لحظية مباشرة'}</span>
+                      <span>مزامنة سحابية مباشرة</span>
                     </span>
                   </div>
                 </div>
@@ -737,10 +701,10 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleBackToAllKhatmahs}
-                    className="px-3.5 py-2 bg-surface-subtle hover:bg-surface-hover border border-border-default text-text-primary text-xs font-bold rounded-xl transition-all flex items-center gap-1"
+                    className="px-3.5 py-2 bg-surface-subtle hover:bg-surface-hover border border-border-default text-text-primary text-xs font-bold rounded-2xl transition-all flex items-center gap-1.5"
                   >
                     <span>←</span>
-                    <span>الرجوع للختمات</span>
+                    <span>كافة الختمات</span>
                   </button>
                 </div>
               </div>
@@ -767,18 +731,18 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
                   ></div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs font-semibold pt-1">
-                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/20">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-semibold pt-1">
+                  <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/20">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    <span>تمت القراءة: {stats.completed}</span>
+                    <span>مقروء: {stats.completed}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20">
+                  <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-300 bg-amber-500/10 px-3 py-1 rounded-xl border border-amber-500/20">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                    <span>قيد القراءة: {stats.reserved}</span>
+                    <span>محجوز: {stats.reserved}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-text-muted bg-surface-subtle px-3 py-1 rounded-xl border border-border-default">
                     <span className="w-2.5 h-2.5 rounded-full bg-border-default"></span>
-                    <span>متاح للحجز: {stats.available}</span>
+                    <span>متاح: {stats.available}</span>
                   </div>
 
                   {khatmah.isCompleted && (
@@ -822,7 +786,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
                   className="px-5 py-2.5 bg-surface hover:bg-surface-hover text-text-primary border border-border-default font-bold rounded-2xl shadow-sm flex items-center gap-2 transition-all"
                 >
                   <span>🔄</span>
-                  <span>بدء دورة جديدة لنفس الختمة</span>
+                  <span>تجديد الختمة لدورة جديدة</span>
                 </button>
               </div>
             </div>
@@ -857,97 +821,105 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
             </div>
           )}
 
-          {/* 30 Juz Grid: Clean, intuitive square/box grid WITHOUT ayahs, only Surahs */}
+          {/* 30 Juz Numbers Grid: Clean, intuitive number-only grid with status colors */}
           {!isLoading && khatmah && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <h3 className="text-base sm:text-lg font-black text-text-primary flex items-center gap-2">
                   <span>📚</span>
-                  <span>أجزاء القرآن الكريم (30 جزءاً)</span>
+                  <span>أجزاء القرآن الكريم (1 - 30)</span>
                 </h3>
-                <span className="text-xs text-text-muted">اضغط على المربع للحجز أو الإتمام</span>
+
+                {/* Color Legend */}
+                <div className="flex items-center gap-3 text-xs font-bold">
+                  <span className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300">
+                    <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                    <span>مقروء</span>
+                  </span>
+                  <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-300">
+                    <span className="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
+                    <span>محجوز</span>
+                  </span>
+                  <span className="flex items-center gap-1.5 text-text-muted">
+                    <span className="w-3 h-3 rounded-full bg-surface border border-border-default inline-block"></span>
+                    <span>متاح</span>
+                  </span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              {/* Responsive 30 Parts Board */}
+              <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-10 gap-2.5 sm:gap-3">
                 {Array.from({ length: 30 }, (_, idx) => {
                   const partNum = idx + 1;
                   const partData: KhatmahPart = khatmah.parts?.[partNum] || {
                     partNumber: partNum,
                     status: 'available',
                   };
-                  const surahsSummary = JUZ_SURAHS_NAMES[idx] || `الجزء ${partNum}`;
 
                   const isCompleted = partData.status === 'completed';
                   const isReserved = partData.status === 'reserved';
 
+                  const reader = isCompleted
+                    ? (partData.completedBy || partData.reservedBy || 'مكتمل')
+                    : isReserved
+                    ? (partData.reservedBy || 'محجوز')
+                    : 'متاح';
+
                   return (
-                    <div
-                      key={`khatmah-part-${partNum}`}
+                    <button
+                      key={`part-box-${partNum}`}
+                      type="button"
                       onClick={() => handlePartClick(partNum)}
-                      className={`relative rounded-2xl p-3.5 border transition-all flex flex-col justify-between cursor-pointer select-none hover:shadow-md ${
+                      title={`الجزء ${partNum}: ${
                         isCompleted
-                          ? 'bg-emerald-500/10 border-emerald-500/40 hover:border-emerald-500'
+                          ? `تمت القراءة (${reader})`
                           : isReserved
-                          ? 'bg-amber-500/10 border-amber-500/40 hover:border-amber-500 shadow-sm'
-                          : 'bg-surface border-border-default hover:border-primary'
+                          ? `محجوز (${reader})`
+                          : 'متاح للحجز'
+                      }`}
+                      className={`relative aspect-square rounded-2xl sm:rounded-3xl p-1 sm:p-2 border-2 transition-all flex flex-col items-center justify-center cursor-pointer select-none shadow-sm hover:scale-[1.04] active:scale-95 group ${
+                        isCompleted
+                          ? 'bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/60 hover:border-emerald-500 text-emerald-900 dark:text-emerald-100'
+                          : isReserved
+                          ? 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/50 hover:border-amber-500 text-amber-900 dark:text-amber-100'
+                          : 'bg-surface hover:bg-surface-subtle border-border-default hover:border-primary/60 text-text-primary'
                       }`}
                     >
-                      {/* Top Part Header: Part number and status badge */}
-                      <div>
-                        <div className="flex items-center justify-between gap-1 mb-2">
-                          <span
-                            className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs font-mono ${
-                              isCompleted
-                                ? 'bg-emerald-500 text-white'
-                                : isReserved
-                                ? 'bg-amber-500 text-white'
-                                : 'bg-surface-subtle border border-border-default text-text-primary'
-                            }`}
-                          >
-                            {partNum}
-                          </span>
+                      {/* Top indicator badge */}
+                      {isCompleted ? (
+                        <span className="absolute top-1 sm:top-1.5 right-1 sm:right-1.5 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] shadow-sm font-bold">
+                          ✓
+                        </span>
+                      ) : isReserved ? (
+                        <span className="absolute top-1 sm:top-1.5 right-1 sm:right-1.5 w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-amber-400 ring-2 ring-amber-400/40"></span>
+                      ) : null}
 
-                          {/* Status Badge */}
-                          {isCompleted ? (
-                            <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold flex items-center gap-1">
-                              <CheckIcon className="w-3 h-3" />
-                              مكتمل
-                            </span>
-                          ) : isReserved ? (
-                            <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[10px] font-bold">
-                              محجوز
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-md bg-surface-subtle text-text-muted text-[10px] font-semibold border border-border-subtle">
-                              متاح
-                            </span>
-                          )}
-                        </div>
+                      {/* Part Number Prominent Display */}
+                      <span
+                        className={`text-xl sm:text-2xl md:text-3xl font-black font-mono leading-none tracking-tight ${
+                          isCompleted
+                            ? 'text-emerald-700 dark:text-emerald-300'
+                            : isReserved
+                            ? 'text-amber-700 dark:text-amber-300'
+                            : 'text-text-primary group-hover:text-primary transition-colors'
+                        }`}
+                      >
+                        {partNum}
+                      </span>
 
-                        {/* Surahs inside this Juz (NO AYAH NUMBERS) */}
-                        <h4 className="font-bold text-text-primary text-xs line-clamp-2 leading-tight">
-                          {surahsSummary}
-                        </h4>
-                      </div>
-
-                      {/* Bottom Reader info or reservation call-to-action */}
-                      <div className="mt-3 pt-2 border-t border-border-subtle">
-                        {isCompleted ? (
-                          <p className="text-xs text-emerald-700 dark:text-emerald-300 font-bold truncate">
-                            ✨ {partData.completedBy || partData.reservedBy || 'فاعل خير'}
-                          </p>
-                        ) : isReserved ? (
-                          <p className="text-xs text-amber-800 dark:text-amber-300 font-bold truncate">
-                            👤 {partData.reservedBy}
-                          </p>
-                        ) : (
-                          <span className="text-[11px] font-bold text-primary flex items-center justify-center gap-1">
-                            <span>+</span>
-                            <span>احجز الآن</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                      {/* Bottom status text / reader name */}
+                      <span
+                        className={`text-[10px] sm:text-[11px] font-bold truncate max-w-full px-1 mt-1 text-center leading-none ${
+                          isCompleted
+                            ? 'text-emerald-700 dark:text-emerald-300'
+                            : isReserved
+                            ? 'text-amber-800 dark:text-amber-200'
+                            : 'text-text-muted group-hover:text-primary'
+                        }`}
+                      >
+                        {isCompleted ? reader : isReserved ? reader : '+ احجز'}
+                      </span>
+                    </button>
                   );
                 })}
               </div>
@@ -995,17 +967,6 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
           onCreate={handleCreateKhatmah}
         />
       )}
-
-      {/* Cloudflare Worker Setup Modal */}
-      <CloudflareSetupModal
-        isOpen={isCloudflareModalOpen}
-        onClose={() => setIsCloudflareModalOpen(false)}
-        onSaved={() => {
-          showToast('تم حفظ إعدادات Cloudflare بنجاح!');
-          if (currentKhatmahId) loadKhatmahData(currentKhatmahId);
-          else loadKhatmahsList();
-        }}
-      />
 
       {/* Duaa Khatm Al-Quran Modal */}
       <DuaaKhatmModal

@@ -133,5 +133,8 @@ export interface GroupKhatmah {
   isCompleted: boolean;
   completedAt?: number;
   parts: Record<number, KhatmahPart>;
+  khatmahType?: 'once' | 'monthly_recurring'; // نوع الختمة: لمرة واحدة أو دورية شهرية
+  currentCycleMonth?: string; // e.g. "2026-08"
+  cycleNumber?: number; // رقم الدورة الحالية (1, 2, ...)
 }
 

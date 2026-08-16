@@ -1,5 +1,6 @@
 /**
  * Cloudflare Worker for Group Khatmah (الختمة الجماعية) - QRAN.TOP
+ * الباحث في القرآن الكريم
  */
 
 export default {
@@ -34,18 +35,57 @@ export default {
       });
     };
 
+    const getCurrentYearMonth = () => {
+      return new Date().toISOString().slice(0, 7);
+    };
+
+    const createInitialParts = () => {
+      const parts = {};
+      for (let i = 1; i <= 30; i++) {
+        parts[i] = { partNumber: i, status: 'available' };
+      }
+      return parts;
+    };
+
+    // Monthly recurring check
+    const checkAndRenewMonthly = async (khatmah) => {
+      if (!khatmah || khatmah.khatmahType !== 'monthly_recurring') return khatmah;
+      const currentMonth = getCurrentYearMonth();
+      if (khatmah.currentCycleMonth && khatmah.currentCycleMonth !== currentMonth) {
+        khatmah.currentCycleMonth = currentMonth;
+        khatmah.cycleNumber = (khatmah.cycleNumber || 1) + 1;
+        khatmah.parts = createInitialParts();
+        khatmah.isCompleted = false;
+        delete khatmah.completedAt;
+        if (kv) {
+          await kv.put(`khatmah:${khatmah.id}`, JSON.stringify(khatmah));
+        }
+      }
+      return khatmah;
+    };
+
+    const isRealKhatmah = (k) => {
+      if (!k || !k.id) return false;
+      if (k.id === 'KHT-7777' || k.id === 'KHT-2026') return false;
+      if (k.title && k.title.includes('الختمة القرآنية المباركة الأولى')) return false;
+      return true;
+    };
+
     // Helper: read from KV
     const getKhatmahData = async (id) => {
       if (kv) {
         const str = await kv.get(`khatmah:${id}`);
-        return str ? JSON.parse(str) : null;
+        if (!str) return null;
+        const parsed = JSON.parse(str);
+        if (!isRealKhatmah(parsed)) return null;
+        return await checkAndRenewMonthly(parsed);
       }
       return null;
     };
 
     // Helper: save to KV
     const saveKhatmahData = async (khatmah) => {
-      if (kv) {
+      if (kv && isRealKhatmah(khatmah)) {
         await kv.put(`khatmah:${khatmah.id}`, JSON.stringify(khatmah));
         
         // Also update recent index list
@@ -54,7 +94,7 @@ export default {
         if (indexStr) {
           try { indexList = JSON.parse(indexStr); } catch (e) {}
         }
-        indexList = indexList.filter(k => k.id !== khatmah.id);
+        indexList = indexList.filter(k => isRealKhatmah(k) && k.id !== khatmah.id);
         indexList.unshift(khatmah);
         if (indexList.length > 100) indexList = indexList.slice(0, 100);
         await kv.put('khatmahs_index', JSON.stringify(indexList));
@@ -67,24 +107,7 @@ export default {
         if (kv) {
           const indexStr = await kv.get('khatmahs_index');
           let list = indexStr ? JSON.parse(indexStr) : [];
-          // Ensure default first khatmah exists if empty
-          if (list.length === 0) {
-            const defaultParts = {};
-            for (let i = 1; i <= 30; i++) {
-              defaultParts[i] = { partNumber: i, status: 'available' };
-            }
-            const defaultK = {
-              id: 'KHT-2026',
-              title: 'الختمة القرآنية المباركة العامة',
-              dedication: 'ختمة قرآنية جماعية للمغفرة والرحمة والبركة',
-              createdBy: 'إدارة الموقع',
-              createdAt: Date.now(),
-              isCompleted: false,
-              parts: defaultParts,
-            };
-            await saveKhatmahData(defaultK);
-            list = [defaultK];
-          }
+          list = list.filter(isRealKhatmah);
           return jsonResponse(list);
         }
         return jsonResponse([]);
@@ -93,6 +116,9 @@ export default {
       // 2. Get single Khatmah
       if (method === 'GET' && path.startsWith('/api/khatmah/')) {
         const id = decodeURIComponent(path.replace('/api/khatmah/', '')).toUpperCase();
+        if (!id || id === 'KHT-7777' || id === 'KHT-2026') {
+          return jsonResponse({ error: 'الختمة غير موجودة' }, 404);
+        }
         const data = await getKhatmahData(id);
         if (!data) {
           return jsonResponse({ error: 'الختمة غير موجودة' }, 404);
@@ -113,12 +139,14 @@ export default {
         body.id = body.id.toUpperCase();
         if (!body.createdAt) body.createdAt = Date.now();
         if (!body.parts) {
-          body.parts = {};
-          for (let i = 1; i <= 30; i++) {
-            body.parts[i] = { partNumber: i, status: 'available' };
-          }
+          body.parts = createInitialParts();
         }
         body.isCompleted = false;
+        body.khatmahType = body.khatmahType || 'once';
+        if (body.khatmahType === 'monthly_recurring') {
+          body.currentCycleMonth = getCurrentYearMonth();
+          body.cycleNumber = body.cycleNumber || 1;
+        }
 
         await saveKhatmahData(body);
         return jsonResponse(body, 201);
@@ -132,7 +160,7 @@ export default {
         const data = await getKhatmahData(id);
         if (!data) return jsonResponse({ error: 'الختمة غير موجودة' }, 404);
 
-        if (!data.parts) data.parts = {};
+        if (!data.parts) data.parts = createInitialParts();
         data.parts[partNumber] = {
           partNumber: Number(partNumber),
           status: 'reserved',
@@ -159,7 +187,7 @@ export default {
         const data = await getKhatmahData(id);
         if (!data) return jsonResponse({ error: 'الختمة غير موجودة' }, 404);
 
-        if (!data.parts) data.parts = {};
+        if (!data.parts) data.parts = createInitialParts();
         data.parts[partNumber] = {
           partNumber: Number(partNumber),
           status: 'available',
@@ -178,7 +206,7 @@ export default {
         const data = await getKhatmahData(id);
         if (!data) return jsonResponse({ error: 'الختمة غير موجودة' }, 404);
 
-        if (!data.parts) data.parts = {};
+        if (!data.parts) data.parts = createInitialParts();
         const prev = data.parts[partNumber] || {};
         data.parts[partNumber] = {
           partNumber: Number(partNumber),
@@ -209,7 +237,7 @@ export default {
         const data = await getKhatmahData(id);
         if (!data) return jsonResponse({ error: 'الختمة غير موجودة' }, 404);
 
-        if (!data.parts) data.parts = {};
+        if (!data.parts) data.parts = createInitialParts();
         const part = data.parts[partNumber];
         if (part) {
           if (part.reservedBy) {
