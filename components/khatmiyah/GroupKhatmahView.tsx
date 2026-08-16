@@ -179,6 +179,20 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
     };
   }, [currentKhatmahId, loadKhatmahData, loadKhatmahsList]);
 
+  // Ensure unique list of khatmahs by id
+  const uniqueKhatmahsList = useMemo(() => {
+    const map = new Map<string, GroupKhatmah>();
+    khatmahsList.forEach((k, idx) => {
+      if (k) {
+        const idKey = k.id || `khatmah-${idx}`;
+        if (!map.has(idKey)) {
+          map.set(idKey, { ...k, id: idKey });
+        }
+      }
+    });
+    return Array.from(map.values());
+  }, [khatmahsList]);
+
   // Listen to hash changes (#/khatmah or #/khatmah/KHT-1234)
   useEffect(() => {
     const handleHashChange = () => {
@@ -534,7 +548,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
           <div className="flex items-center justify-between">
             <h2 className="text-base sm:text-lg font-black text-text-primary flex items-center gap-2">
               <span>📋</span>
-              <span>الختمات القرآنية المتاحة ({khatmahsList.length})</span>
+              <span>الختمات القرآنية المتاحة ({uniqueKhatmahsList.length})</span>
             </h2>
             <span className="text-xs text-text-muted">اضغط على أي ختمة لعرض وحجز الأجزاء</span>
           </div>
@@ -544,7 +558,7 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
               <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
               <p className="text-sm font-semibold text-text-secondary">جاري تحميل الختمات المتاحة...</p>
             </div>
-          ) : khatmahsList.length === 0 ? (
+          ) : uniqueKhatmahsList.length === 0 ? (
             <div className="p-8 bg-surface border border-border-default rounded-3xl text-center space-y-4">
               <span className="text-4xl">🌿</span>
               <h3 className="text-base font-bold text-text-primary">لا توجد ختمات متاحة حالياً</h3>
@@ -560,13 +574,13 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {khatmahsList.map(k => {
+              {uniqueKhatmahsList.map((k, idx) => {
                 const prog = getKhatmahProgress(k);
                 const isDone = k.isCompleted || prog.percent === 100;
 
                 return (
                   <div
-                    key={k.id}
+                    key={`khatmah-card-${k.id}-${idx}`}
                     className="bg-surface border border-border-default hover:border-primary rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4 cursor-pointer relative group"
                     onClick={() => handleOpenKhatmah(k.id)}
                   >

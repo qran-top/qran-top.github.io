@@ -65,10 +65,9 @@ export async function initBackendStorage() {
         title: 'الختمة القرآنية المباركة الأولى',
         dedication: 'ختمة قرآنية جماعية للمغفرة والرحمة والبركة',
         createdBy: 'إدارة الموقع',
-        createdAt: new Date().toISOString(),
+        createdAt: Date.now(),
         parts: initializeEmptyParts(),
         isCompleted: false,
-        totalCompletedParts: 0,
       };
       await saveKhatmah(defaultK);
     }
@@ -143,10 +142,9 @@ export async function createNewKhatmah(params: {
     dedication: params.dedication || '',
     targetDate: params.targetDate || '',
     createdBy: params.createdBy || 'فاعل خير',
-    createdAt: new Date().toISOString(),
+    createdAt: Date.now(),
     parts: initializeEmptyParts(),
     isCompleted: false,
-    totalCompletedParts: 0,
   };
 
   await saveKhatmah(newKhatmah);
@@ -170,7 +168,7 @@ export async function reserveKhatmahPart(
 
   part.status = 'reserved';
   part.reservedBy = reservedBy.trim() || 'فاعل خير';
-  part.reservedAt = new Date().toISOString();
+  part.reservedAt = Date.now();
   khatmah.parts[partNumber] = part;
 
   await saveKhatmah(khatmah);
@@ -221,7 +219,7 @@ export async function completeKhatmahPart(
 
   part.status = 'completed';
   part.completedBy = completedBy || part.reservedBy || 'فاعل خير';
-  part.completedAt = new Date().toISOString();
+  part.completedAt = Date.now();
   khatmah.parts[partNumber] = part;
 
   recomputeKhatmahStatus(khatmah);
@@ -259,10 +257,9 @@ function recomputeKhatmahStatus(k: GroupKhatmah) {
       completedCount++;
     }
   }
-  k.totalCompletedParts = completedCount;
   k.isCompleted = completedCount === 30;
   if (k.isCompleted && !k.completedAt) {
-    k.completedAt = new Date().toISOString();
+    k.completedAt = Date.now();
   } else if (!k.isCompleted) {
     delete k.completedAt;
   }
