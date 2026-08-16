@@ -244,52 +244,138 @@ export const GroupKhatmahView: React.FC<GroupKhatmahViewProps> = ({
   const handleReserveConfirm = async (name: string, andReadNow = false) => {
     if (!khatmah || reservingPartNumber === null) return;
     const partNum = reservingPartNumber;
+    const cleanName = name.trim() || 'مشارك';
+
+    // 1. Instant optimistic update: change box color immediately
+    const optimisticParts = {
+      ...(khatmah.parts || {}),
+      [partNum]: {
+        partNumber: partNum,
+        status: 'reserved' as const,
+        reservedBy: cleanName,
+        reservedAt: Date.now(),
+      },
+    };
+    setKhatmah({
+      ...khatmah,
+      parts: optimisticParts,
+    });
+    setReservingPartNumber(null);
+
     try {
-      const updated = await khatmahService.reservePart(khatmah.id, partNum, name);
-      setKhatmah(updated);
-      showToast(`تم حجز الجزء ${partNum} باسم "${name}" بنجاح.`);
+      const updated = await khatmahService.reservePart(khatmah.id, partNum, cleanName);
+      setKhatmah({ ...updated, parts: { ...updated.parts } });
+      showToast(`تم حجز الجزء ${partNum} باسم "${cleanName}" بنجاح.`);
 
       if (andReadNow) {
         handleNavigateToJuzReading(partNum);
       }
     } catch (err: any) {
-      alert(err?.message || 'حدث خطأ أثناء حجز الجزء');
+      console.error('Reserve error:', err);
+      showToast('حدث خطأ أثناء حجز الجزء، يرجى المحاولة ثانية.');
+      loadKhatmahData(khatmah.id, true);
     }
   };
 
   const handleUnreserve = async (partNumber: number) => {
     if (!khatmah) return;
+
+    // Instant optimistic update
+    const optimisticParts = {
+      ...(khatmah.parts || {}),
+      [partNumber]: {
+        partNumber,
+        status: 'available' as const,
+      },
+    };
+    setKhatmah({
+      ...khatmah,
+      parts: optimisticParts,
+      isCompleted: false,
+    });
+
     try {
       const updated = await khatmahService.unreservePart(khatmah.id, partNumber);
-      setKhatmah(updated);
+      setKhatmah({ ...updated, parts: { ...updated.parts } });
       showToast(`تم إلغاء حجز الجزء ${partNumber} وإتاحته للجميع`);
     } catch (err: any) {
-      alert(err?.message || 'حدث خطأ أثناء إلغاء الحجز');
+      console.error('Unreserve error:', err);
+      showToast('حدث خطأ أثناء إلغاء الحجز');
+      loadKhatmahData(khatmah.id, true);
     }
   };
 
   const handleCompletePart = async (partNumber: number) => {
     if (!khatmah) return;
+
+    const existingPart = khatmah.parts?.[partNumber];
+    const completedBy = existingPart?.reservedBy || existingPart?.completedBy || 'فاعل خير';
+
+    // Instant optimistic update
+    const optimisticParts = {
+      ...(khatmah.parts || {}),
+      [partNumber]: {
+        partNumber,
+        status: 'completed' as const,
+        completedBy,
+        completedAt: Date.now(),
+      },
+    };
+
+    let completedCount = 0;
+    for (let i = 1; i <= 30; i++) {
+      if (optimisticParts[i]?.status === 'completed') completedCount++;
+    }
+    const isCompleted = completedCount === 30;
+
+    setKhatmah({
+      ...khatmah,
+      parts: optimisticParts,
+      isCompleted,
+      completedAt: isCompleted ? Date.now() : undefined,
+    });
+
     try {
-      const updated = await khatmahService.completePart(khatmah.id, partNumber);
-      setKhatmah(updated);
+      const updated = await khatmahService.completePart(khatmah.id, partNumber, completedBy);
+      setKhatmah({ ...updated, parts: { ...updated.parts } });
       showToast(`مبارك! تم تسجيل إتمام الجزء ${partNumber} بنجاح.`);
       if (updated.isCompleted) {
         setIsDuaaModalOpen(true);
       }
     } catch (err: any) {
-      alert(err?.message || 'حدث خطأ');
+      console.error('Complete part error:', err);
+      showToast('حدث خطأ أثناء تأكيد الإتمام');
+      loadKhatmahData(khatmah.id, true);
     }
   };
 
   const handleUncompletePart = async (partNumber: number) => {
     if (!khatmah) return;
+
+    const prevPart = khatmah.parts?.[partNumber];
+    const optimisticParts = {
+      ...(khatmah.parts || {}),
+      [partNumber]: {
+        partNumber,
+        status: prevPart?.reservedBy ? ('reserved' as const) : ('available' as const),
+        reservedBy: prevPart?.reservedBy,
+      },
+    };
+
+    setKhatmah({
+      ...khatmah,
+      parts: optimisticParts,
+      isCompleted: false,
+    });
+
     try {
       const updated = await khatmahService.uncompletePart(khatmah.id, partNumber);
-      setKhatmah(updated);
+      setKhatmah({ ...updated, parts: { ...updated.parts } });
       showToast(`تم التراجع عن إتمام الجزء ${partNumber}`);
     } catch (err: any) {
-      alert(err?.message || 'حدث خطأ');
+      console.error('Uncomplete part error:', err);
+      showToast('حدث خطأ أثناء التراجع');
+      loadKhatmahData(khatmah.id, true);
     }
   };
 

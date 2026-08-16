@@ -1,11 +1,18 @@
 import { GroupKhatmah, KhatmahPart } from '../types';
 import { safeLocalStorage } from '../utils/storage';
 
-const KHATMAH_STORAGE_KEY = 'qran_group_khatmahs_v3';
+const KHATMAH_STORAGE_KEY = 'qran_group_khatmahs_v4';
 const CLOUDFLARE_WORKER_URL_KEY = 'qran_cloudflare_khatmah_worker_url';
 
 // Primary Production Cloudflare Worker connected to KV
 export const DEFAULT_WORKER_URL = 'https://qran-khatmah-api.amerawad111.workers.dev';
+
+// Clear legacy storage keys on module load
+try {
+  safeLocalStorage.removeItem('qran_group_khatmahs');
+  safeLocalStorage.removeItem('qran_group_khatmahs_v2');
+  safeLocalStorage.removeItem('qran_group_khatmahs_v3');
+} catch (e) {}
 
 // BroadcastChannel for cross-tab live updates on the same device
 const broadcastChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('qran_khatmah_sync') : null;
@@ -20,6 +27,27 @@ export const createInitialParts = (): Record<number, KhatmahPart> => {
     };
   }
   return parts;
+};
+
+// Helper: Normalize parts object ensuring keys 1-30 are populated
+export const normalizeKhatmahParts = (parts?: Record<any, any>): Record<number, KhatmahPart> => {
+  const normalized = createInitialParts();
+  if (!parts) return normalized;
+
+  for (let i = 1; i <= 30; i++) {
+    const rawPart = parts[i] || parts[String(i)];
+    if (rawPart) {
+      normalized[i] = {
+        partNumber: i,
+        status: rawPart.status || 'available',
+        reservedBy: rawPart.reservedBy || undefined,
+        reservedAt: rawPart.reservedAt || undefined,
+        completedBy: rawPart.completedBy || undefined,
+        completedAt: rawPart.completedAt || undefined,
+      };
+    }
+  }
+  return normalized;
 };
 
 // Generate human-friendly ID like "KHT-7392"
@@ -598,10 +626,11 @@ export const khatmahService = {
         if (res.ok) {
           const list = await res.json();
           if (Array.isArray(list)) {
-            const local = getLocalKhatmahs();
+            const local: Record<string, GroupKhatmah> = {};
             const uniqueMap = new Map<string, GroupKhatmah>();
             list.forEach((k: GroupKhatmah) => {
               if (isRealKhatmah(k)) {
+                k.parts = normalizeKhatmahParts(k.parts);
                 const renewed = checkAndRenewMonthlyKhatmah(k);
                 local[renewed.id] = renewed;
                 uniqueMap.set(renewed.id, renewed);
@@ -624,10 +653,11 @@ export const khatmahService = {
       if (res.ok) {
         const list = await res.json();
         if (Array.isArray(list)) {
-          const local = getLocalKhatmahs();
+          const local: Record<string, GroupKhatmah> = {};
           const uniqueMap = new Map<string, GroupKhatmah>();
           list.forEach((k: GroupKhatmah) => {
             if (isRealKhatmah(k)) {
+              k.parts = normalizeKhatmahParts(k.parts);
               const renewed = checkAndRenewMonthlyKhatmah(k);
               local[renewed.id] = renewed;
               uniqueMap.set(renewed.id, renewed);
@@ -645,8 +675,29 @@ export const khatmahService = {
 
     // 3. Fallback to local
     const local = getLocalKhatmahs();
-    const list = Object.values(local).filter(isRealKhatmah);
+    const list = Object.values(local).filter(isRealKhatmah).map(k => {
+      k.parts = normalizeKhatmahParts(k.parts);
+      return k;
+    });
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+
+  // Clear all khatmahs everywhere
+  async clearAllKhatmahs(): Promise<void> {
+    const workerUrl = getCloudflareWorkerUrl();
+    if (workerUrl) {
+      try {
+        await fetch(`${workerUrl.replace(/\/$/, '')}/api/khatmah/admin/clear-all`, {
+          method: 'POST',
+        });
+      } catch (e) {}
+    }
+    try {
+      await fetch('/api/khatmah/admin/clear-all', {
+        method: 'POST',
+      });
+    } catch (e) {}
+    saveLocalKhatmahs({});
   },
 
   // Subscribe to live sync

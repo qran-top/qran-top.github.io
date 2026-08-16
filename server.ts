@@ -15,6 +15,7 @@ import {
   unreserveKhatmahPart,
   completeKhatmahPart,
   uncompleteKhatmahPart,
+  clearAllBackendKhatmahs,
 } from './server/khatmahBackend';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -27,9 +28,11 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  // Initialize storage & auto-check Cloudflare on startup
-  initBackendStorage().catch(err => {
-    console.error('Initial storage init error:', err);
+  // Initialize storage & wipe all old test khatmahs completely
+  clearAllBackendKhatmahs().then(() => {
+    console.log('🧹 All old khatmahs cleared from backend & KV.');
+  }).catch(err => {
+    console.error('Initial storage clear error:', err);
   });
 
   // ==========================================
@@ -46,6 +49,16 @@ async function startServer() {
     try {
       const status = await checkAndInitCloudflare(true);
       res.json(status);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Clear all khatmahs endpoint
+  app.post('/api/khatmah/admin/clear-all', async (req, res) => {
+    try {
+      await clearAllBackendKhatmahs();
+      res.json({ success: true, message: 'All khatmahs deleted' });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

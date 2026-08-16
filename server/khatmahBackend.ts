@@ -3,6 +3,7 @@ import {
   checkAndInitCloudflare,
   getKvValue,
   putKvValue,
+  clearAllKvKhatmahs,
 } from './cloudflareService';
 
 // In-memory cache for ultra-fast response
@@ -54,6 +55,15 @@ function isRealKhatmah(k: GroupKhatmah | null | undefined): k is GroupKhatmah {
   return true;
 }
 
+export async function clearAllBackendKhatmahs(): Promise<void> {
+  memoryKhatmahs.clear();
+  try {
+    await clearAllKvKhatmahs();
+  } catch (err) {
+    console.error('Error clearing KV:', err);
+  }
+}
+
 export async function initBackendStorage() {
   if (isInitialized) return;
   isInitialized = true;
@@ -67,16 +77,19 @@ export async function initBackendStorage() {
       const indexRaw = await getKvValue('khatmahs_index');
       if (indexRaw) {
         try {
-          const ids: any[] = JSON.parse(indexRaw);
-          for (const item of ids) {
-            const id = typeof item === 'string' ? item : item?.id;
-            if (!id || id === 'KHT-7777' || id === 'KHT-2026') continue;
-
-            const dataRaw = await getKvValue(`khatmah_${id}`);
-            if (dataRaw) {
-              const k: GroupKhatmah = JSON.parse(dataRaw);
-              if (isRealKhatmah(k)) {
-                memoryKhatmahs.set(k.id, checkAndRenewMonthlyKhatmah(k));
+          const items: any[] = JSON.parse(indexRaw);
+          for (const item of items) {
+            if (typeof item === 'object' && item && item.id && isRealKhatmah(item)) {
+              memoryKhatmahs.set(item.id, checkAndRenewMonthlyKhatmah(item));
+            } else if (typeof item === 'string') {
+              const id = item.toUpperCase();
+              if (id === 'KHT-7777' || id === 'KHT-2026') continue;
+              const dataRaw = (await getKvValue(`khatmah:${id}`)) || (await getKvValue(`khatmah_${id}`));
+              if (dataRaw) {
+                const k: GroupKhatmah = JSON.parse(dataRaw);
+                if (isRealKhatmah(k)) {
+                  memoryKhatmahs.set(k.id, checkAndRenewMonthlyKhatmah(k));
+                }
               }
             }
           }
@@ -99,10 +112,13 @@ async function saveKhatmah(khatmah: GroupKhatmah): Promise<void> {
   try {
     const status = await checkAndInitCloudflare();
     if (status.storageMode === 'cloudflare_kv') {
-      await putKvValue(`khatmah_${khatmah.id}`, JSON.stringify(khatmah));
+      // Store under both formats for total interoperability with Worker
+      const json = JSON.stringify(khatmah);
+      await putKvValue(`khatmah:${khatmah.id}`, json);
+      await putKvValue(`khatmah_${khatmah.id}`, json);
 
-      const allIds = Array.from(memoryKhatmahs.keys());
-      await putKvValue('khatmahs_index', JSON.stringify(allIds));
+      const allList = Array.from(memoryKhatmahs.values()).filter(isRealKhatmah);
+      await putKvValue('khatmahs_index', JSON.stringify(allList));
     }
   } catch (err) {
     console.error('Failed to sync to Cloudflare KV:', err);
@@ -131,7 +147,7 @@ export async function getKhatmahById(id: string): Promise<GroupKhatmah | null> {
 
   // Try fetching directly from Cloudflare KV if not in memory
   try {
-    const raw = await getKvValue(`khatmah_${normalizedId}`);
+    const raw = (await getKvValue(`khatmah:${normalizedId}`)) || (await getKvValue(`khatmah_${normalizedId}`));
     if (raw) {
       const parsed: GroupKhatmah = JSON.parse(raw);
       if (isRealKhatmah(parsed)) {

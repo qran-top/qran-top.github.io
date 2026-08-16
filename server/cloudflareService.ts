@@ -282,3 +282,47 @@ export async function listKvKeys(prefix = ''): Promise<string[]> {
     return [];
   }
 }
+
+// KV Delete helper
+export async function deleteKvKey(key: string): Promise<boolean> {
+  const token = getApiToken();
+  if (!token || !cachedAccountId || !cachedNamespaceId) return false;
+
+  try {
+    const res = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${cachedAccountId}/storage/kv/namespaces/${cachedNamespaceId}/values/${encodeURIComponent(
+        key
+      )}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return res.ok;
+  } catch (e) {
+    console.error('Error deleting KV key:', key, e);
+    return false;
+  }
+}
+
+// Wipe all khatmahs from Cloudflare KV completely
+export async function clearAllKvKhatmahs(): Promise<number> {
+  await checkAndInitCloudflare();
+  const keys = await listKvKeys();
+  let deletedCount = 0;
+  for (const key of keys) {
+    if (
+      key.startsWith('khatmah') ||
+      key.startsWith('kht_') ||
+      key === 'khatmahs_index'
+    ) {
+      await deleteKvKey(key);
+      deletedCount++;
+    }
+  }
+  console.log(`🧹 Wiped ${deletedCount} keys from Cloudflare KV.`);
+  return deletedCount;
+}
+

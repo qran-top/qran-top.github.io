@@ -74,7 +74,10 @@ export default {
     // Helper: read from KV
     const getKhatmahData = async (id) => {
       if (kv) {
-        const str = await kv.get(`khatmah:${id}`);
+        let str = await kv.get(`khatmah:${id}`);
+        if (!str) {
+          str = await kv.get(`khatmah_${id}`);
+        }
         if (!str) return null;
         const parsed = JSON.parse(str);
         if (!isRealKhatmah(parsed)) return null;
@@ -86,7 +89,9 @@ export default {
     // Helper: save to KV
     const saveKhatmahData = async (khatmah) => {
       if (kv && isRealKhatmah(khatmah)) {
-        await kv.put(`khatmah:${khatmah.id}`, JSON.stringify(khatmah));
+        const json = JSON.stringify(khatmah);
+        await kv.put(`khatmah:${khatmah.id}`, json);
+        await kv.put(`khatmah_${khatmah.id}`, json);
         
         // Also update recent index list
         let indexList = [];
@@ -94,7 +99,7 @@ export default {
         if (indexStr) {
           try { indexList = JSON.parse(indexStr); } catch (e) {}
         }
-        indexList = indexList.filter(k => isRealKhatmah(k) && k.id !== khatmah.id);
+        indexList = indexList.filter(k => isRealKhatmah(k) && (k.id || k) !== khatmah.id);
         indexList.unshift(khatmah);
         if (indexList.length > 100) indexList = indexList.slice(0, 100);
         await kv.put('khatmahs_index', JSON.stringify(indexList));
@@ -102,6 +107,17 @@ export default {
     };
 
     try {
+      // 0. Admin Clear All
+      if (path === '/api/khatmah/admin/clear-all' || (method === 'DELETE' && path === '/api/khatmahs')) {
+        if (kv) {
+          const listRes = await kv.list();
+          for (const key of listRes.keys) {
+            await kv.delete(key.name);
+          }
+        }
+        return jsonResponse({ success: true, message: 'All khatmahs cleared' });
+      }
+
       // 1. List all recent Khatmahs
       if (method === 'GET' && (path === '/api/khatmahs' || path === '/api/khatmah')) {
         if (kv) {
