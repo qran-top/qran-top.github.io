@@ -109,6 +109,6 @@ export type Collections = Record<string, Collection>;
 // --- Type for new settings ---
 export type FontSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 export type BrowsingMode = 'full' | 'page';
-export type FontStyleType = 'imlai_1' | 'imlai_2' | 'uthmani';
+export type FontStyleType = 'imlai_1' | 'imlai_2' | 'uthmani' | 'mushaf';
 export type PlaybackMode = 'continuous' | 'single' | 'selection_juz' | 'selection_surah';
 export type WordClickBehavior = 'auto' | 'direct_search' | 'show_menu';

@@ -16,6 +16,7 @@ const FONT_STYLES: { id: FontStyleType; name: string; description: string; class
     { id: 'imlai_1', name: 'الخط الإملائي النظامي (التفاعلي السريع)', description: 'خط عالي الأداء مع وضوح عالي للتشكيل والحروف', className: 'font-quran-simple' },
     { id: 'uthmani', name: 'خط الحفص بالرسم العثماني الأصيل', description: 'مطابق لرسم مصحف المدينة المنورة مع كافة علامات الضبط والوقف', className: 'font-quran-title' },
     { id: 'imlai_2', name: 'الخط النسخي الأنيق', description: 'نسق كتابي كلاسيكي هادئ ومريح للعين', className: 'font-sans' },
+    { id: 'mushaf', name: 'عرض المصحف الحقيقي (صفحات المصحف)', description: 'يعرض الصفحة مطابقة تماماً للمصحف المطبوع 15 سطراً', className: 'font-quran-title' },
 ];
 
 const ReadingSettings: React.FC = () => {
@@ -253,7 +254,13 @@ const ReadingSettings: React.FC = () => {
                     {FONT_STYLES.map((style) => (
                         <label
                             key={style.id}
-                            onClick={() => setFontStyle(style.id)}
+                            onClick={() => {
+                                setFontStyle(style.id);
+                                if (style.id === 'mushaf') {
+                                    setBrowsingMode('page');
+                                    setSelectedEdition('quran-uthmani-quran-academy');
+                                }
+                            }}
                             className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${
                                 fontStyle === style.id
                                     ? 'bg-surface border-primary ring-2 ring-primary/20 shadow-xs'

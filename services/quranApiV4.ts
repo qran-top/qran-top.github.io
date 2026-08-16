@@ -5,6 +5,9 @@ export interface QuranV4Word {
     text_uthmani: string;
     text_tajweed?: string;
     location: string;
+    line_number?: number;
+    page_number?: number;
+    char_type_name?: string;
     translation?: {
         text: string;
         language_name?: string;
@@ -20,6 +23,7 @@ export interface QuranV4Verse {
     verse_key: string;
     text_uthmani: string;
     text_tajweed?: string;
+    juz_number?: number;
     words: QuranV4Word[];
 }
 
@@ -263,3 +267,26 @@ export async function playSmartWordAudio(
     }
 }
 
+
+export async function fetchPageVersesV4(pageNumber: number): Promise<QuranV4Verse[]> {
+    try {
+        const localCached = localStorage.getItem(`quran_v4_page_${pageNumber}`);
+        if (localCached) return JSON.parse(localCached);
+        
+        const url = `https://api.quran.com/api/v4/verses/by_page/${pageNumber}?words=true&word_fields=text_uthmani,location,audio_url,char_type_name,line_number,page_number`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`API response error: ${res.status}`);
+        
+        const data = await res.json();
+        if (data.verses && data.verses.length > 0) {
+            try {
+                localStorage.setItem(`quran_v4_page_${pageNumber}`, JSON.stringify(data.verses));
+            } catch (e) {}
+            return data.verses;
+        }
+        return [];
+    } catch (error) {
+        console.warn(`[QuranApiV4] Failed to fetch page ${pageNumber}:`, error);
+        return [];
+    }
+}

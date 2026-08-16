@@ -199,7 +199,11 @@ const Header: React.FC<HeaderProps> = ({
             setFontStyle('uthmani');
             setSelectedEdition('quran-uthmani-quran-academy');
             setBrowsingMode('page');
-        } else { // 'uthmani'
+        } else if (fontStyle === 'uthmani') {
+            setFontStyle('mushaf');
+            setSelectedEdition('quran-uthmani-quran-academy');
+            setBrowsingMode('page');
+        } else { // 'mushaf'
             setFontStyle('imlai_1');
             setSelectedEdition('quran-simple-clean');
             setBrowsingMode('full');
@@ -207,11 +211,12 @@ const Header: React.FC<HeaderProps> = ({
     }, [fontStyle, setFontStyle, setSelectedEdition, setBrowsingMode]);
 
     const getToggleLabel = () => {
-        if (isUthmaniLoading && fontStyle !== 'uthmani') return '...';
+        if (isUthmaniLoading && fontStyle !== 'uthmani' && fontStyle !== 'mushaf') return '...';
         switch (fontStyle) {
             case 'imlai_1': return 'إملائي 1';
             case 'imlai_2': return 'إملائي 2';
             case 'uthmani': return 'عثماني';
+            case 'mushaf': return 'مصحف';
             default: return '...';
         }
     };

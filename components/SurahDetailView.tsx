@@ -1,3 +1,4 @@
+import { MushafPageView } from "./MushafPageView";
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import type { SurahData, SavedAyahItem, Ayah } from '../types';
 import { SpinnerIcon, ArrowLeftIcon, ArrowRightIcon } from './icons';
@@ -132,14 +133,19 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
   // Consume Settings from Context
   const { displayEdition, fontSize, fontStyle, browsingMode, setFontStyle, setSelectedEdition, setBrowsingMode } = useSettingsContext();
 
-  // Enforce Uthmani page mode when navigating to a specific page
+  // Enforce Uthmani or Mushaf page mode when navigating to a specific page
   useEffect(() => {
-    if (forcedPageNumber && (browsingMode !== 'page' || fontStyle !== 'uthmani')) {
-      setFontStyle('uthmani');
-      setSelectedEdition('quran-uthmani-quran-academy');
-      setBrowsingMode('page');
+    if (forcedPageNumber) {
+      if (browsingMode !== 'page') {
+        setBrowsingMode('page');
+      }
+      if (fontStyle !== 'uthmani' && fontStyle !== 'mushaf') {
+        setFontStyle('uthmani');
+        setSelectedEdition('quran-uthmani-quran-academy');
+      }
     }
-  }, [forcedPageNumber, browsingMode, fontStyle, setFontStyle, setSelectedEdition, setBrowsingMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forcedPageNumber, setFontStyle, setSelectedEdition, setBrowsingMode]);
 
   // Determine current page logic
   const { ayahsByPage, firstPage, lastPage, getPageForAyahNumber } = useMemo(() => {
@@ -612,6 +618,15 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
     <div className="animate-fade-in w-full max-w-4xl mx-auto px-4">
       <div className="overflow-hidden rounded-lg">
         {browsingMode === 'page' ? (
+          fontStyle === 'mushaf' ? (
+            <MushafPageView 
+              pageNumber={currentPage} 
+              onPageChange={navigateToPage}
+              onWordClick={(wordText, surahNum, ayahNum, wordIndex) => {
+                onWordClick(wordText, 'quran-simple-clean', { surah: surahNum, ayah: ayahNum, wordIndex });
+              }}
+            />
+          ) : (
              <div>
                 <div className="mushaf-page relative">
                     {pageInfo?.markers.map((marker, index) => (
@@ -706,6 +721,7 @@ const SurahDetailView: React.FC<SurahDetailViewProps> = ({
                     </footer>
                 </div>
             </div>
+          )
         ) : (
             <main
                 className={`bg-surface p-6 sm:p-8 rounded-lg shadow-md transition-colors duration-300`}
