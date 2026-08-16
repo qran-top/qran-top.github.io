@@ -44,7 +44,7 @@ const App: React.FC = () => {
 
     const {
         playbackInfo, currentlyPlayingAyahGlobalNumber, selectedAudioEditionDetails,
-        handleStartPlayback, handlePlayPause, handleNext, handlePrev, handleClosePlayback
+        handleStartPlayback, handlePlayPause, handlePlay, handlePause, handleNext, handlePrev, handleClosePlayback
     } = useAudioPlayer(currentPath, allQuranData, selectedAudioEdition, setSelectedAudioEdition, fetchCustomEditionData);
 
     const {
@@ -259,7 +259,7 @@ const App: React.FC = () => {
                     {playbackInfo && <AudioPlayerBar 
                         playlist={playbackInfo.playlist} currentIndex={playbackInfo.currentIndex}
                         isPlaying={playbackInfo.isPlaying} isLoading={!!playbackInfo?.trigger}
-                        onPlayPause={handlePlayPause} onNext={handleNext} onPrev={handlePrev}
+                        onPlayPause={handlePlayPause} onPlay={handlePlay} onPause={handlePause} onNext={handleNext} onPrev={handlePrev}
                         onEnded={handleNext} onClose={handleClosePlayback}
                         audioEdition={selectedAudioEditionDetails}
                     />}

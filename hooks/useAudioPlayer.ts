@@ -126,6 +126,8 @@ export const useAudioPlayer = (
     }, [playbackInfo, allQuranData, handleStartPlayback]);
 
     const handlePlayPause = () => setPlaybackInfo(p => p ? { ...p, isPlaying: !p.isPlaying } : null);
+    const handlePlay = useCallback(() => setPlaybackInfo(p => p ? { ...p, isPlaying: true } : null), []);
+    const handlePause = useCallback(() => setPlaybackInfo(p => p ? { ...p, isPlaying: false } : null), []);
     const handleClosePlayback = () => setPlaybackInfo(null);
     const handleNext = useCallback(() => {
         setPlaybackInfo(p => {
@@ -153,6 +155,8 @@ export const useAudioPlayer = (
         selectedAudioEditionDetails,
         handleStartPlayback,
         handlePlayPause,
+        handlePlay,
+        handlePause,
         handleNext,
         handlePrev,
         handleClosePlayback,

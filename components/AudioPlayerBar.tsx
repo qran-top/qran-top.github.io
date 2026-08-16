@@ -10,6 +10,8 @@ interface AudioPlayerBarProps {
     isPlaying: boolean;
     isLoading: boolean;
     onPlayPause: () => void;
+    onPlay: () => void;
+    onPause: () => void;
     onNext: () => void;
     onPrev: () => void;
     onEnded: () => void;
@@ -17,7 +19,7 @@ interface AudioPlayerBarProps {
     audioEdition: QuranEdition | undefined;
 }
 
-const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ playlist, currentIndex, isPlaying, isLoading, onPlayPause, onNext, onPrev, onEnded, onClose, audioEdition }) => {
+const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ playlist, currentIndex, isPlaying, isLoading, onPlayPause, onPlay, onPause, onNext, onPrev, onEnded, onClose, audioEdition }) => {
     const audioRef = useRef<HTMLAudioElement>(null);
     const currentAyah = playlist[currentIndex];
     const [isRecitersModalOpen, setIsRecitersModalOpen] = useState(false);
@@ -48,8 +50,14 @@ const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ playlist, currentIndex,
                     console.error("Audio play failed:", e);
                 }
             });
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
+            }
         } else {
             audio.pause();
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'paused';
+            }
         }
     }, [currentIndex, isPlaying, playlist, currentAyah]);
 
@@ -62,6 +70,35 @@ const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({ playlist, currentIndex,
             };
         }
     }, [onEnded]);
+
+    useEffect(() => {
+        if ('mediaSession' in navigator && currentAyah) {
+            const surahName = currentAyah.surah?.name ? formatSurahNameForDisplay(currentAyah.surah.name) : '...';
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: `سورة ${surahName} - الآية ${currentAyah.numberInSurah}`,
+                artist: audioEdition?.name || 'القرآن الكريم',
+                album: 'القرآن الكريم',
+                artwork: [
+                    { src: '/thumbnail.svg', sizes: '512x512', type: 'image/svg+xml' },
+                    { src: '/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+                    { src: '/icon-512x512.png', sizes: '512x512', type: 'image/png' }
+                ]
+            });
+
+            navigator.mediaSession.setActionHandler('play', onPlay);
+            navigator.mediaSession.setActionHandler('pause', onPause);
+            navigator.mediaSession.setActionHandler('previoustrack', onPrev);
+            navigator.mediaSession.setActionHandler('nexttrack', onNext);
+            
+            // Cleanup on unmount
+            return () => {
+                navigator.mediaSession.setActionHandler('play', null);
+                navigator.mediaSession.setActionHandler('pause', null);
+                navigator.mediaSession.setActionHandler('previoustrack', null);
+                navigator.mediaSession.setActionHandler('nexttrack', null);
+            };
+        }
+    }, [currentAyah, audioEdition, onPlay, onPause, onPrev, onNext]);
 
     const handleAudioError = () => {
         if (audioRef.current && currentAyah?.audioSecondary && currentAyah.audioSecondary.length > 0) {
