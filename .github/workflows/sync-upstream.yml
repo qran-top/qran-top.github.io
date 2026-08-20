@@ -1,0 +1,37 @@
+name: Sync with Upstream
+
+on:
+  # فحص وجلب التحديثات تلقائياً كل 6 ساعات
+  schedule:
+    - cron: '0 */6 * * *'
+  # تشغيل المزامنة يدوياً عند الرغبة
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Target Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync from Source Repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # إضافة المستودع الأول كمصدر
+          git remote add upstream https://github.com/kw-co/qran.top.git
+          git fetch upstream
+          
+          # التحقق من الفرع الافتراضي والدمج
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          git checkout $BRANCH
+          git merge upstream/$BRANCH --allow-unrelated-histories -X theirs --no-edit || git merge upstream/main --allow-unrelated-histories -X theirs --no-edit || git merge upstream/master --allow-unrelated-histories -X theirs --no-edit
+          
+          # رفع التحديثات إلى المستودع
+          git push origin $BRANCH
