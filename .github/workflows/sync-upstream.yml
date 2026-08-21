@@ -1,4 +1,4 @@
-name: Sync with Upstream
+name: Sync, Build and Deploy
 
 on:
   schedule:
@@ -7,9 +7,18 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  sync:
+  sync-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Target Repo
@@ -22,17 +31,46 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # إضافة المستودع الأول وجلب بياناته
-          git remote add upstream https://github.com/kw-co/qran.top.git
+          git remote add upstream https://github.com/kw-co/qran.top.git || true
           git fetch upstream
-          
-          # معرفة الفرع الافتراضي الحالي
           CURRENT_BRANCH=$(git branch --show-current)
-          
-          # جلب التعديلات واستبدالها بنسخة الأصل بدقة
           git merge upstream/main --allow-unrelated-histories -X theirs -m "Sync from upstream" || \
-          git merge upstream/master --allow-unrelated-histories -X theirs -m "Sync from upstream"
-          
-          # رفع التحديثات
-          git push origin $CURRENT_BRANCH
+          git merge upstream/master --allow-unrelated-histories -X theirs -m "Sync from upstream" || true
+          git push origin $CURRENT_BRANCH || true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies & Build
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+          npm run build
+
+      - name: Determine Build Output Directory
+        id: find-dist
+        run: |
+          if [ -d "dist" ]; then
+            echo "dir=dist" >> $GITHUB_OUTPUT
+          elif [ -d "build" ]; then
+            echo "dir=build" >> $GITHUB_OUTPUT
+          else
+            echo "dir=." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ steps.find-dist.outputs.dir }}
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
