@@ -15,10 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  sync-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  sync-and-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Target Repo
@@ -27,15 +24,16 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync from Source Repo
+      - name: Sync from Upstream
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote add upstream https://github.com/kw-co/qran.top.git || true
           git fetch upstream
           CURRENT_BRANCH=$(git branch --show-current)
-          git merge upstream/main --allow-unrelated-histories -X theirs -m "Sync from upstream" || \
-          git merge upstream/master --allow-unrelated-histories -X theirs -m "Sync from upstream" || true
+          git merge upstream/$CURRENT_BRANCH --allow-unrelated-histories -X theirs -m "Sync upstream" || \
+          git merge upstream/main --allow-unrelated-histories -X theirs -m "Sync upstream" || \
+          git merge upstream/master --allow-unrelated-histories -X theirs -m "Sync upstream" || true
           git push origin $CURRENT_BRANCH || true
 
       - name: Setup Node.js
@@ -43,24 +41,22 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Dependencies & Build
+      - name: Install & Build
         run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
+          npm install
           npm run build
 
-      - name: Determine Build Output Directory
-        id: find-dist
+      - name: Verify Build Output
+        id: set-dir
         run: |
           if [ -d "dist" ]; then
-            echo "dir=dist" >> $GITHUB_OUTPUT
+            echo "out_dir=dist" >> $GITHUB_OUTPUT
           elif [ -d "build" ]; then
-            echo "dir=build" >> $GITHUB_OUTPUT
+            echo "out_dir=build" >> $GITHUB_OUTPUT
+          elif [ -d "out" ]; then
+            echo "out_dir=out" >> $GITHUB_OUTPUT
           else
-            echo "dir=." >> $GITHUB_OUTPUT
+            echo "out_dir=." >> $GITHUB_OUTPUT
           fi
 
       - name: Setup Pages
@@ -69,7 +65,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ steps.find-dist.outputs.dir }}
+          path: ${{ steps.set-dir.outputs.out_dir }}
 
       - name: Deploy to GitHub Pages
         id: deployment
